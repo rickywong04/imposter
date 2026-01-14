@@ -7,10 +7,7 @@
     <title>Imposter - Social Deduction Game</title>
     <meta name="description" content="A multiplayer social deduction game. Trust no one, find the imposter!">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -575,8 +572,8 @@
         <!-- Game Logic Script -->
         <script src="game.js"></script>
 
-        <!-- Firebase Client -->
-        <script src="firebaseClient.js"></script>
+        <!-- Socket.io Client -->
+        <script src="socketClient.js"></script>
 
         <!-- UI Controller Script -->
         <script>

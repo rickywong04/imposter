@@ -2,8 +2,10 @@
 let socket = null;
 let isConnected = false;
 
-// Server URL (change this when deploying)
-const SERVER_URL = 'http://localhost:3000';
+// Server URL - auto-detect based on current location
+const SERVER_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : window.location.origin;
 
 // Initialize socket connection
 function initSocket() {
