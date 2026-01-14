@@ -1,0 +1,258 @@
+/* Word Imposter MVP - Custom Styles */
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes cardReveal {
+    0% {
+        transform: rotateY(90deg) scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: rotateY(-10deg) scale(1.05);
+    }
+    100% {
+        transform: rotateY(0deg) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes confetti {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+/* Animation utility classes */
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.animate-slide-in-right {
+    animation: slideInRight 0.4s ease-out forwards;
+}
+
+.animate-pulse-slow {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+    animation: spin 3s linear infinite;
+}
+
+.animate-bounce-slow {
+    animation: bounce 2s ease-in-out infinite;
+}
+
+.animate-card-reveal {
+    animation: cardReveal 0.6s ease-out forwards;
+}
+
+/* Staggered animations */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+.stagger-7 { animation-delay: 0.7s; }
+.stagger-8 { animation-delay: 0.8s; }
+
+/* Role cards */
+.role-card {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+}
+
+.role-card-inner {
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+.role-card.flipped .role-card-inner {
+    transform: rotateY(180deg);
+}
+
+/* Timer styling */
+.timer-critical {
+    color: #ef4444;
+    animation: pulse 0.5s ease-in-out infinite;
+}
+
+/* Voting styles */
+.vote-option {
+    transition: all 0.2s ease;
+}
+
+.vote-option:hover {
+    transform: translateY(-2px);
+}
+
+.vote-option.selected {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+}
+
+/* Word submission list */
+.word-item {
+    opacity: 0;
+    animation: slideInRight 0.3s ease-out forwards;
+}
+
+/* Imposter reveal effect */
+.imposter-reveal {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background-size: 200% 200%;
+    animation: shimmer 3s ease infinite;
+}
+
+/* Crew win effect */
+.crew-win {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+/* Glass effect */
+.glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Input focus styles */
+.input-focus:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    outline: none;
+}
+
+/* Button hover effects */
+.btn-primary {
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Player avatar */
+.player-avatar {
+    transition: transform 0.2s ease;
+}
+
+.player-avatar:hover {
+    transform: scale(1.1);
+}
+
+/* Phase indicator */
+.phase-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #d1d5db;
+    transition: all 0.3s ease;
+}
+
+.phase-dot.active {
+    background-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+}
+
+.phase-dot.completed {
+    background-color: #22c55e;
+}
+
+/* Hidden class */
+.hidden {
+    display: none !important;
+}
+
+/* Screen sections */
+.game-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
