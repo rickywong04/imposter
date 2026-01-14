@@ -3,6 +3,7 @@ const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const { WORD_DATABASE } = require('./wordDatabase');
 
 const app = express();
 app.use(cors());
@@ -17,36 +18,6 @@ const io = new Server(httpServer, {
 
 // Room storage
 const rooms = new Map();
-
-// Word database (same as client)
-const WORD_DATABASE = [
-    { topic: "Breakfast Foods", word: "Pancakes" },
-    { topic: "Breakfast Foods", word: "Scrambled Eggs" },
-    { topic: "Pets", word: "Golden Retriever" },
-    { topic: "Pets", word: "Siamese Cat" },
-    { topic: "Fruits", word: "Mango" },
-    { topic: "Fruits", word: "Pomegranate" },
-    { topic: "Sports", word: "Tennis" },
-    { topic: "Sports", word: "Ice Hockey" },
-    { topic: "Countries", word: "Japan" },
-    { topic: "Countries", word: "Brazil" },
-    { topic: "Movies", word: "Titanic" },
-    { topic: "Movies", word: "The Lion King" },
-    { topic: "Vehicles", word: "Motorcycle" },
-    { topic: "Vehicles", word: "Submarine" },
-    { topic: "Desserts", word: "Cheesecake" },
-    { topic: "Desserts", word: "Tiramisu" },
-    { topic: "Musical Instruments", word: "Saxophone" },
-    { topic: "Musical Instruments", word: "Violin" },
-    { topic: "Furniture", word: "Recliner" },
-    { topic: "Furniture", word: "Bookshelf" },
-    { topic: "Drinks", word: "Cappuccino" },
-    { topic: "Drinks", word: "Lemonade" },
-    { topic: "Occupations", word: "Firefighter" },
-    { topic: "Occupations", word: "Architect" },
-    { topic: "Clothing", word: "Tuxedo" },
-    { topic: "Clothing", word: "Sneakers" },
-];
 
 const AVATARS = ['😀', '😎', '🤠', '🥳', '😺', '🦊', '🐸', '🦉', '🐙', '🦋', '🌸', '⭐', '🔥', '💎', '🎮', '🎨'];
 

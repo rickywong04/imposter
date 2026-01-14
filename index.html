@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Imposter - Social Deduction Game</title>
-    <meta name="description" content="A multiplayer social deduction game. Trust no one, find the imposter!">
+    <title>Imposter - Party Game</title>
+    <meta name="description" content="A multiplayer party game. Trust no one, find the imposter!">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
@@ -599,6 +599,16 @@
                         </ul>
                     </div>
 
+                    <div class="rounded-xl bg-purple-50 p-4">
+                        <h3 class="font-bold text-purple-700 mb-2">🃏 Jester (Optional)</h3>
+                        <ul class="list-disc pl-5 space-y-1 text-purple-900">
+                            <li>Requires 4+ players to enable</li>
+                            <li>The Jester knows the secret word like the Crew</li>
+                            <li>But the Jester wins by getting voted out!</li>
+                            <li>Act suspicious to draw votes, but not too obvious</li>
+                        </ul>
+                    </div>
+
                     <div>
                         <h3 class="font-bold text-gray-900 mb-2">🔄 Gameplay</h3>
                         <ul class="list-disc pl-5 space-y-1">
@@ -621,11 +631,15 @@
                         <ul class="list-disc pl-5 space-y-1">
                             <li><span class="text-green-600 font-semibold">Crew wins:</span> Vote out the Imposter</li>
                             <li><span class="text-red-600 font-semibold">Imposter wins:</span> Avoid getting caught</li>
+                            <li><span class="text-purple-600 font-semibold">Jester wins:</span> Get voted out instead of the Imposter</li>
                         </ul>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Word Database -->
+        <script src="wordDatabase.js"></script>
 
         <!-- Game Logic Script -->
         <script src="game.js"></script>

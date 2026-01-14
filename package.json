@@ -1,7 +1,7 @@
 {
   "name": "imposter-game",
   "version": "1.0.0",
-  "description": "A multiplayer social deduction game",
+  "description": "A multiplayer party game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
