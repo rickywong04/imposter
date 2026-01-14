@@ -106,6 +106,16 @@
                             Add Player (max 8)
                         </button>
 
+                        <!-- Jester Option -->
+                        <label class="flex items-center gap-3 rounded-xl bg-purple-50 p-3 cursor-pointer hover:bg-purple-100 transition">
+                            <input type="checkbox" id="jester-enabled" class="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                            <div class="flex-1">
+                                <span class="font-semibold text-purple-700">Include Jester</span>
+                                <p class="text-xs text-purple-500">One player wins by getting voted out</p>
+                            </div>
+                            <span class="text-2xl">🃏</span>
+                        </label>
+
                         <button onclick="handleLocalStart()" type="button"
                             class="btn-primary w-full rounded-xl bg-red-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-600">
                             <span class="flex items-center justify-center gap-2">
@@ -190,6 +200,12 @@
          ========================================== -->
     <div id="screen-waiting" class="game-screen relative z-10 hidden">
         <main class="w-full max-w-md px-6">
+            <!-- Back Button -->
+            <button onclick="handleBackToLobby()"
+                class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition">
+                <span class="iconify" data-icon="lucide:arrow-left" data-width="16"></span>
+                Leave Room
+            </button>
             <div class="text-center mb-6">
                 <h2 class="text-2xl font-bold text-gray-900 font-quicksand">Waiting Room</h2>
                 <div class="mt-2 flex items-center justify-center gap-2">
@@ -212,17 +228,6 @@
                     <!-- Players will be inserted here -->
                 </div>
 
-                <!-- Add Player Section -->
-                <div class="border-t border-gray-100 p-4">
-                    <div class="flex gap-2">
-                        <input type="text" id="add-player-name" placeholder="Add player name..." maxlength="12"
-                            class="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm input-focus">
-                        <button onclick="handleAddPlayer()"
-                            class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition">
-                            Add
-                        </button>
-                    </div>
-                </div>
 
                 <div class="border-t border-gray-100 bg-gray-50/50 p-6">
                     <button id="start-game-btn" onclick="handleStartGame()" disabled
@@ -243,6 +248,12 @@
          ========================================== -->
     <div id="screen-reveal" class="game-screen relative z-10 hidden">
         <main class="w-full max-w-md px-6 text-center">
+            <!-- Back Button -->
+            <button onclick="handleBackToLobby(true)"
+                class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition">
+                <span class="iconify" data-icon="lucide:arrow-left" data-width="16"></span>
+                Leave Game
+            </button>
             <div class="mb-6">
                 <p class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Pass device to</p>
                 <h2 id="reveal-player-name" class="mt-2 text-3xl font-bold text-gray-900 font-quicksand"></h2>
@@ -288,6 +299,12 @@
          ========================================== -->
     <div id="screen-local-start" class="game-screen relative z-10 hidden">
         <main class="w-full max-w-md px-6 text-center">
+            <!-- Back Button -->
+            <button onclick="handleBackToLobby(true)"
+                class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition">
+                <span class="iconify" data-icon="lucide:arrow-left" data-width="16"></span>
+                Leave Game
+            </button>
             <div class="mb-6 animate-fade-in-up">
                 <div class="text-6xl mb-4">🎮</div>
                 <h2 class="text-3xl font-bold text-gray-900 font-quicksand">Let's Play!</h2>
@@ -348,6 +365,12 @@
          ========================================== -->
     <div id="screen-submission" class="game-screen relative z-10 hidden">
         <main class="w-full max-w-md px-6">
+            <!-- Back Button -->
+            <button onclick="handleBackToLobby(true)"
+                class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition">
+                <span class="iconify" data-icon="lucide:arrow-left" data-width="16"></span>
+                Leave Game
+            </button>
             <div class="text-center mb-6">
                 <div
                     class="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600 mb-2">
@@ -366,11 +389,7 @@
                     <span id="current-turn-avatar" class="text-4xl"></span>
                     <span id="current-turn-name" class="text-xl font-bold text-gray-900 font-quicksand"></span>
                 </div>
-                <div class="mt-4 flex items-center justify-center gap-2 text-red-500">
-                    <span class="iconify" data-icon="lucide:clock" data-width="16"></span>
-                    <span id="submission-timer" class="text-lg font-bold">15</span>
-                    <span class="text-sm">seconds</span>
-                </div>
+                <p id="turn-status" class="mt-3 text-sm text-gray-500"></p>
             </div>
 
             <!-- Submission Input -->
@@ -395,13 +414,19 @@
                 </div>
             </div>
         </main>
+    </div>
 
-
-        <!-- ==========================================
+    <!-- ==========================================
          SCREEN: DISCUSSION
          ========================================== -->
-        <div id="screen-discussion" class="game-screen relative z-10 hidden">
-            <main class="w-full max-w-md px-6 text-center">
+    <div id="screen-discussion" class="game-screen relative z-10 hidden">
+        <main class="w-full max-w-md px-6 text-center">
+            <!-- Back Button -->
+            <button onclick="handleBackToLobby(true)"
+                class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition">
+                <span class="iconify" data-icon="lucide:arrow-left" data-width="16"></span>
+                Leave Game
+            </button>
                 <div class="mb-6">
                     <div
                         class="inline-flex items-center gap-2 rounded-full bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-600 mb-2">
@@ -433,42 +458,48 @@
                     </div>
                 </div>
 
-                <button onclick="handleProceedToVote()"
+                <button id="proceed-to-vote-btn" onclick="handleProceedToVote()"
                     class="btn-primary rounded-xl bg-red-500 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-600">
                     <span class="flex items-center justify-center gap-2">
                         Proceed to Vote
                         <span class="iconify" data-icon="lucide:arrow-right" data-width="16"></span>
                     </span>
                 </button>
-            </main>
-        </div>
+        </main>
+    </div>
 
-        <!-- ==========================================
+    <!-- ==========================================
          SCREEN: VOTING
          ========================================== -->
-        <div id="screen-voting" class="game-screen relative z-10 hidden">
-            <main class="w-full max-w-md px-6">
-                <div class="text-center mb-6">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Voting</p>
-                    <h2 id="voting-player-name" class="mt-2 text-2xl font-bold text-gray-900 font-quicksand"></h2>
-                    <p class="mt-1 text-sm text-gray-500">Who do you think is the imposter?</p>
-                </div>
+    <div id="screen-voting" class="game-screen relative z-10 hidden">
+        <main class="w-full max-w-md px-6">
+            <!-- Back Button -->
+            <button onclick="handleBackToLobby(true)"
+                class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition">
+                <span class="iconify" data-icon="lucide:arrow-left" data-width="16"></span>
+                Leave Game
+            </button>
+            <div class="text-center mb-6">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Voting</p>
+                <h2 id="voting-player-name" class="mt-2 text-2xl font-bold text-gray-900 font-quicksand"></h2>
+                <p class="mt-1 text-sm text-gray-500">Who do you think is the imposter?</p>
+            </div>
 
-                <div id="voting-options" class="space-y-3 mb-6">
-                    <!-- Vote options will be inserted here -->
-                </div>
+            <div id="voting-options" class="space-y-3 mb-6">
+                <!-- Vote options will be inserted here -->
+            </div>
 
-                <button id="confirm-vote-btn" onclick="handleConfirmVote()" disabled
-                    class="w-full btn-primary rounded-xl bg-red-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                    Confirm Vote
-                </button>
-            </main>
-        </div>
+            <button id="confirm-vote-btn" onclick="handleConfirmVote()" disabled
+                class="w-full btn-primary rounded-xl bg-red-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                Confirm Vote
+            </button>
+        </main>
+    </div>
 
-        <!-- ==========================================
+    <!-- ==========================================
          SCREEN: RESULTS
          ========================================== -->
-        <div id="screen-results" class="game-screen relative z-10 hidden">
+    <div id="screen-results" class="game-screen relative z-10 hidden">
             <main class="w-full max-w-md px-6 text-center">
                 <!-- Result Header -->
                 <div id="result-header" class="mb-8">
@@ -483,6 +514,11 @@
                                 Was
                             </p>
                             <p id="result-imposter-name" class="text-2xl font-bold text-red-500 font-quicksand"></p>
+                        </div>
+                        <!-- Jester Result (hidden by default) -->
+                        <div id="result-jester-section" class="mb-6 hidden">
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">The Jester Was</p>
+                            <p id="result-jester-name" class="text-2xl font-bold text-purple-500 font-quicksand"></p>
                         </div>
                         <div class="mb-6 rounded-xl bg-gray-50 p-4">
                             <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">The Secret Word
@@ -501,20 +537,42 @@
                     </div>
                 </div>
 
-                <button onclick="handlePlayAgain()"
-                    class="btn-primary rounded-xl bg-gray-900 px-8 py-3 text-sm font-semibold text-white shadow-lg hover:bg-gray-800">
-                    <span class="flex items-center justify-center gap-2">
-                        Play Again
-                        <span class="iconify" data-icon="lucide:refresh-cw" data-width="16"></span>
-                    </span>
-                </button>
-            </main>
-        </div>
+                <!-- Jester Toggle for Next Round (local mode only) -->
+                <div id="results-jester-toggle" class="mb-4 hidden">
+                    <label class="flex items-center gap-3 rounded-xl bg-purple-50 p-3 cursor-pointer hover:bg-purple-100 transition">
+                        <input type="checkbox" id="jester-next-round" class="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                        <div class="flex-1 text-left">
+                            <span class="font-semibold text-purple-700">Include Jester</span>
+                            <p class="text-xs text-purple-500">For next round</p>
+                        </div>
+                        <span class="text-2xl">🃏</span>
+                    </label>
+                </div>
 
-        <!-- ==========================================
+                <!-- Buttons Container -->
+                <div id="results-buttons" class="space-y-3">
+                    <button onclick="handlePlayAgain()"
+                        class="btn-primary w-full rounded-xl bg-red-500 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-600">
+                        <span class="flex items-center justify-center gap-2">
+                            Play Again
+                            <span class="iconify" data-icon="lucide:refresh-cw" data-width="16"></span>
+                        </span>
+                    </button>
+                    <button onclick="handleNewGame()"
+                        class="w-full rounded-xl bg-gray-100 px-8 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-200 transition">
+                        <span class="flex items-center justify-center gap-2">
+                            <span class="iconify" data-icon="lucide:users" data-width="16"></span>
+                            Change Players
+                        </span>
+                    </button>
+                </div>
+        </main>
+    </div>
+
+    <!-- ==========================================
          MODAL: RULES
          ========================================== -->
-        <div id="rules-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+    <div id="rules-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
             <div class="absolute inset-0 bg-black/50" onclick="closeRules()"></div>
             <div
                 class="relative max-w-md w-full max-h-[80vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl animate-fade-in-up">
@@ -587,6 +645,36 @@
             // ===========================================
             // SCREEN MANAGEMENT
             // ===========================================
+            function handleBackToLobby(confirmLeave = false) {
+                if (confirmLeave) {
+                    if (!confirm('Are you sure you want to leave the game?')) {
+                        return;
+                    }
+                }
+
+                // Stop any running timers
+                if (typeof stopTimer === 'function') {
+                    stopTimer();
+                }
+
+                // Disconnect from socket if in online mode
+                if (!isLocalMode && typeof socketLeaveRoom === 'function') {
+                    socketLeaveRoom();
+                }
+
+                // Reset game state
+                if (typeof initGame === 'function') {
+                    initGame();
+                }
+
+                // Reset local mode flag
+                isLocalMode = false;
+                localPlayerCount = 3;
+
+                // Go back to lobby
+                showScreen('screen-lobby');
+            }
+
             function showScreen(screenId) {
                 document.querySelectorAll('.game-screen').forEach(screen => {
                     screen.classList.add('hidden');
@@ -707,6 +795,14 @@
                     return;
                 }
 
+                // Get jester option
+                const jesterEnabled = document.getElementById('jester-enabled').checked;
+
+                if (jesterEnabled && names.length < 4) {
+                    alert('Need at least 4 players to include a Jester!');
+                    return;
+                }
+
                 // Set local mode flag
                 isLocalMode = true;
 
@@ -724,8 +820,8 @@
                     });
                 });
 
-                // Start the game immediately
-                const result = startGame();
+                // Start the game immediately with jester option
+                const result = startGame({ jesterEnabled: jesterEnabled });
                 if (result.success) {
                     showRevealScreen();
                 } else {
@@ -819,19 +915,6 @@
                 }
             }
 
-            function handleAddPlayer() {
-                const input = document.getElementById('add-player-name');
-                const name = input.value.trim();
-                if (!name) return;
-
-                const result = addPlayer(name);
-                if (result.success) {
-                    input.value = '';
-                    updatePlayerList();
-                } else {
-                    alert(result.error);
-                }
-            }
 
             function handleRemovePlayer(index) {
                 removePlayer(index);
@@ -920,17 +1003,25 @@
                 document.getElementById('role-topic').textContent = info.topic;
                 document.getElementById('role-word').textContent = info.word;
 
+                // Reset classes first
+                const roleWord = document.getElementById('role-word');
+                const roleCard = document.getElementById('role-card');
+                roleWord.classList.remove('text-red-500', 'text-purple-500', 'text-gray-900');
+                roleCard.classList.remove('ring-2', 'ring-red-200', 'ring-purple-200');
+
                 if (info.isImposter) {
                     document.getElementById('role-icon').textContent = '🕵️';
-                    document.getElementById('role-word').classList.add('text-red-500');
-                    document.getElementById('role-word').classList.remove('text-gray-900');
-                    document.getElementById('role-card').classList.add('ring-2', 'ring-red-200');
+                    roleWord.classList.add('text-red-500');
+                    roleCard.classList.add('ring-2', 'ring-red-200');
                     document.getElementById('role-hint').textContent = 'You are the IMPOSTER! Blend in without knowing the word.';
+                } else if (info.isJester) {
+                    document.getElementById('role-icon').textContent = '🃏';
+                    roleWord.classList.add('text-purple-500');
+                    roleCard.classList.add('ring-2', 'ring-purple-200');
+                    document.getElementById('role-hint').textContent = 'You are the JESTER! Try to get voted out to win.';
                 } else {
                     document.getElementById('role-icon').textContent = '✅';
-                    document.getElementById('role-word').classList.remove('text-red-500');
-                    document.getElementById('role-word').classList.add('text-gray-900');
-                    document.getElementById('role-card').classList.remove('ring-2', 'ring-red-200');
+                    roleWord.classList.add('text-gray-900');
                     document.getElementById('role-hint').textContent = 'Say words related to this without being too obvious!';
                 }
 
@@ -1001,16 +1092,23 @@
 
                 const input = document.getElementById('word-input');
                 const submitBtn = document.querySelector('#screen-submission button[type="submit"]');
+                const turnStatus = document.getElementById('turn-status');
 
                 if (isMyTurn) {
                     input.disabled = false;
                     input.placeholder = 'Your turn! Enter your word...';
                     input.focus();
                     submitBtn.disabled = false;
+                    turnStatus.textContent = "It's your turn!";
+                    turnStatus.classList.add('text-red-500', 'font-semibold');
+                    turnStatus.classList.remove('text-gray-500');
                 } else {
                     input.disabled = true;
                     input.placeholder = `Waiting for ${currentPlayer.name}...`;
                     submitBtn.disabled = true;
+                    turnStatus.textContent = `Waiting for ${currentPlayer.name} to submit...`;
+                    turnStatus.classList.remove('text-red-500', 'font-semibold');
+                    turnStatus.classList.add('text-gray-500');
                 }
 
                 updateSubmittedWordsList();
@@ -1207,7 +1305,8 @@
                 });
             }
 
-            function handleWordSubmit(auto = false) {
+            // Local mode submission (only used in Pass to Play mode)
+            function handleLocalWordSubmit(auto = false) {
                 const input = document.getElementById('word-input');
                 let word = input.value.trim();
 
@@ -1244,7 +1343,30 @@
             `).join('');
 
                 showScreen('screen-discussion');
-                startDiscussionTimer();
+
+                if (isLocalMode) {
+                    startDiscussionTimer();
+                } else {
+                    // Online mode - show vote button for host, waiting message for others
+                    const timerEl = document.getElementById('discussion-timer');
+                    if (gameState.isHost) {
+                        timerEl.textContent = '⏳';
+                        // Add click handler to discussion proceed button if it exists
+                        const proceedBtn = document.getElementById('proceed-to-vote-btn');
+                        if (proceedBtn) {
+                            proceedBtn.classList.remove('hidden');
+                            proceedBtn.textContent = 'Start Voting';
+                        }
+                    } else {
+                        timerEl.textContent = '💬';
+                        // Hide proceed button for non-hosts
+                        const proceedBtn = document.getElementById('proceed-to-vote-btn');
+                        if (proceedBtn) {
+                            proceedBtn.textContent = 'Waiting for host...';
+                            proceedBtn.disabled = true;
+                        }
+                    }
+                }
             }
 
             function startDiscussionTimer() {
@@ -1264,9 +1386,19 @@
 
             function handleProceedToVote() {
                 stopTimer();
-                proceedToVoting();
-                currentVoterIndex = 0;
-                showVotingScreen();
+
+                if (isLocalMode) {
+                    // Local mode - use existing logic
+                    proceedToVoting();
+                    currentVoterIndex = 0;
+                    showVotingScreen();
+                } else {
+                    // Online mode - host tells server to proceed
+                    if (gameState.isHost) {
+                        socketProceedToVoting();
+                    }
+                    // Server will emit 'phase-change' to voting which triggers showOnlineVotingScreen
+                }
             }
 
             // ===========================================
@@ -1334,16 +1466,28 @@
                 const header = document.getElementById('result-header');
                 // Use parentElement to control visibility of the whole tally section
                 const tallyContainer = document.getElementById('vote-tally').parentElement;
+                const jesterSection = document.getElementById('result-jester-section');
 
                 if (isLocalMode) {
                     // Simple reveal for local mode
-                    header.innerHTML = `
-                        <div class="text-6xl mb-4 animate-bounce-slow">🕵️</div>
-                        <h2 class="text-3xl font-bold text-gray-900 font-quicksand">The Imposter Was...</h2>
-                    `;
+                    if (results.jesterEnabled) {
+                        header.innerHTML = `
+                            <div class="text-6xl mb-4 animate-bounce-slow">🎭</div>
+                            <h2 class="text-3xl font-bold text-gray-900 font-quicksand">The Roles Were...</h2>
+                        `;
+                        jesterSection.classList.remove('hidden');
+                        document.getElementById('result-jester-name').textContent = results.jesterName;
+                    } else {
+                        header.innerHTML = `
+                            <div class="text-6xl mb-4 animate-bounce-slow">🕵️</div>
+                            <h2 class="text-3xl font-bold text-gray-900 font-quicksand">The Imposter Was...</h2>
+                        `;
+                        jesterSection.classList.add('hidden');
+                    }
                     // Hide vote tally for local mode
                     tallyContainer.classList.add('hidden');
                 } else {
+                    jesterSection.classList.add('hidden');
                     // Full logic for online voting mode
                     tallyContainer.classList.remove('hidden');
 
@@ -1391,19 +1535,52 @@
                     }).join('');
                 }
 
+                // Show/hide jester toggle for local mode (need at least 4 players)
+                const jesterToggle = document.getElementById('results-jester-toggle');
+                const jesterCheckbox = document.getElementById('jester-next-round');
+                if (isLocalMode && gameState.players.length >= 4) {
+                    jesterToggle.classList.remove('hidden');
+                    jesterCheckbox.checked = gameState.jesterEnabled;
+                } else {
+                    jesterToggle.classList.add('hidden');
+                }
+
                 showScreen('screen-results');
             }
 
             function handlePlayAgain() {
-                playAgain();
                 if (isLocalMode) {
-                    // Reset and go back to lobby for local mode
-                    isLocalMode = false;
-                    localPlayerCount = 3;
-                    showScreen('screen-lobby');
+                    // Local mode - start new round with same players, new word
+                    const jesterCheckbox = document.getElementById('jester-next-round');
+                    const jesterEnabled = jesterCheckbox ? jesterCheckbox.checked : false;
+
+                    const result = startGame({ jesterEnabled: jesterEnabled });
+                    if (result.success) {
+                        showRevealScreen();
+                    } else {
+                        alert(result.error);
+                    }
                 } else {
+                    // Online mode - tell server to reset
+                    playAgain();
                     showWaitingRoom();
                 }
+            }
+
+            function handleNewGame() {
+                // Go back to lobby with fresh state
+                if (typeof stopTimer === 'function') {
+                    stopTimer();
+                }
+
+                if (!isLocalMode && typeof socketLeaveRoom === 'function') {
+                    socketLeaveRoom();
+                }
+
+                initGame();
+                isLocalMode = false;
+                localPlayerCount = 3;
+                showScreen('screen-lobby');
             }
 
 

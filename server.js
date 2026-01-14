@@ -211,15 +211,20 @@ io.on('connection', (socket) => {
         const playerIndex = room.players.findIndex(p => p.id === socket.id);
         if (playerIndex >= 0) {
             room.players[playerIndex].ready = true;
+            console.log(`[player-ready] ${room.players[playerIndex].name} is ready in room ${code}`);
         }
 
         // Check if all players are ready
         const allReady = room.players.every(p => p.ready);
+        console.log(`[player-ready] All ready: ${allReady}, Players: ${room.players.map(p => `${p.name}:${p.ready}`).join(', ')}`);
+
         if (allReady) {
             room.gameState.phase = 'submission';
+            const firstTurnIndex = room.gameState.turnOrder[0];
+            console.log(`[player-ready] All players ready! Starting submission phase. First turn: ${room.players[firstTurnIndex].name} (index ${firstTurnIndex})`);
             io.to(code).emit('phase-change', {
                 phase: 'submission',
-                currentTurnIndex: room.gameState.turnOrder[0],
+                currentTurnIndex: firstTurnIndex,
                 submittedWords: []
             });
         }
@@ -229,12 +234,22 @@ io.on('connection', (socket) => {
     socket.on('submit-word', (word) => {
         const code = socket.roomCode;
         const room = rooms.get(code);
-        if (!room || room.gameState.phase !== 'submission') return;
+        console.log(`[submit-word] Room: ${code}, Word: ${word}, Phase: ${room?.gameState?.phase}`);
+
+        if (!room || room.gameState.phase !== 'submission') {
+            console.log(`[submit-word] Rejected - wrong phase or no room`);
+            return;
+        }
 
         const playerIndex = room.players.findIndex(p => p.id === socket.id);
         const expectedIndex = room.gameState.turnOrder[room.gameState.currentPlayerIndex];
 
-        if (playerIndex !== expectedIndex) return; // Not their turn
+        console.log(`[submit-word] PlayerIndex: ${playerIndex}, ExpectedIndex: ${expectedIndex}, CurrentPlayerIndex: ${room.gameState.currentPlayerIndex}`);
+
+        if (playerIndex !== expectedIndex) {
+            console.log(`[submit-word] Rejected - not this player's turn`);
+            return;
+        }
 
         room.gameState.submittedWords.push({
             playerIndex,
@@ -243,19 +258,23 @@ io.on('connection', (socket) => {
         });
 
         room.gameState.currentPlayerIndex++;
+        console.log(`[submit-word] Word accepted. New currentPlayerIndex: ${room.gameState.currentPlayerIndex}`);
 
         if (room.gameState.currentPlayerIndex >= room.players.length) {
             // Move to discussion
             room.gameState.phase = 'discussion';
+            console.log(`[submit-word] All players submitted. Moving to discussion phase.`);
             io.to(code).emit('phase-change', {
                 phase: 'discussion',
                 submittedWords: room.gameState.submittedWords
             });
         } else {
             // Next player's turn
+            const nextTurnIndex = room.gameState.turnOrder[room.gameState.currentPlayerIndex];
+            console.log(`[submit-word] Emitting word-submitted. NextTurnIndex: ${nextTurnIndex}`);
             io.to(code).emit('word-submitted', {
                 submittedWords: room.gameState.submittedWords,
-                currentTurnIndex: room.gameState.turnOrder[room.gameState.currentPlayerIndex]
+                currentTurnIndex: nextTurnIndex
             });
         }
     });
@@ -344,6 +363,41 @@ io.on('connection', (socket) => {
         room.players.forEach(p => p.ready = false);
 
         io.to(code).emit('game-reset', { players: room.players });
+    });
+
+    // Leave room explicitly
+    socket.on('leave-room', () => {
+        const code = socket.roomCode;
+        if (!code) return;
+
+        const room = rooms.get(code);
+        if (!room) return;
+
+        // Remove player from room
+        const playerIndex = room.players.findIndex(p => p.id === socket.id);
+        if (playerIndex >= 0) {
+            const player = room.players[playerIndex];
+            room.players.splice(playerIndex, 1);
+            socket.leave(code);
+            socket.roomCode = null;
+            console.log(`${player.name} left room ${code}`);
+
+            if (room.players.length === 0) {
+                // Delete empty room
+                rooms.delete(code);
+                console.log(`Room ${code} deleted (empty)`);
+            } else {
+                // If host left, assign new host
+                if (room.hostId === socket.id && room.players.length > 0) {
+                    room.hostId = room.players[0].id;
+                    room.players[0].isHost = true;
+                }
+                io.to(code).emit('player-left', {
+                    players: room.players,
+                    leftPlayerName: player.name
+                });
+            }
+        }
     });
 
     // Handle disconnection

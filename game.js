@@ -50,6 +50,8 @@ let gameState = {
     players: [],
     currentWordData: null,
     imposterIndex: -1,
+    jesterIndex: -1,
+    jesterEnabled: false,
     currentPlayerIndex: 0,
     revealPlayerIndex: 0,
     submittedWords: [],
@@ -118,6 +120,8 @@ function initGame() {
         players: [],
         currentWordData: null,
         imposterIndex: -1,
+        jesterIndex: -1,
+        jesterEnabled: false,
         currentPlayerIndex: 0,
         revealPlayerIndex: 0,
         submittedWords: [],
@@ -180,7 +184,7 @@ function canStartGame() {
     return gameState.players.length >= 3;
 }
 
-function startGame() {
+function startGame(options = {}) {
     if (!canStartGame()) {
         return { success: false, error: 'Need at least 3 players' };
     }
@@ -190,6 +194,26 @@ function startGame() {
 
     // Pick random imposter
     gameState.imposterIndex = Math.floor(Math.random() * gameState.players.length);
+
+    // Handle Jester option (use passed option or keep existing setting)
+    if (options.jesterEnabled !== undefined) {
+        gameState.jesterEnabled = options.jesterEnabled;
+    }
+
+    // Pick Jester if enabled (must be different from imposter, need at least 4 players)
+    if (gameState.jesterEnabled && gameState.players.length >= 4) {
+        let jesterIndex;
+        do {
+            jesterIndex = Math.floor(Math.random() * gameState.players.length);
+        } while (jesterIndex === gameState.imposterIndex);
+        gameState.jesterIndex = jesterIndex;
+    } else {
+        gameState.jesterIndex = -1;
+        // Disable jester if not enough players
+        if (gameState.players.length < 4) {
+            gameState.jesterEnabled = false;
+        }
+    }
 
     // Randomize turn order
     const turnOrder = shuffleArray([...Array(gameState.players.length).keys()]);
@@ -208,15 +232,20 @@ function startGame() {
 }
 
 function getPlayerRole(playerIndex) {
-    return playerIndex === gameState.imposterIndex ? 'imposter' : 'crew';
+    if (playerIndex === gameState.imposterIndex) return 'imposter';
+    if (playerIndex === gameState.jesterIndex) return 'jester';
+    return 'crew';
 }
 
 function getPlayerInfo(playerIndex) {
     const isImposter = playerIndex === gameState.imposterIndex;
+    const isJester = playerIndex === gameState.jesterIndex;
     return {
         topic: gameState.currentWordData.topic,
         word: isImposter ? '???' : gameState.currentWordData.word,
-        isImposter: isImposter
+        isImposter: isImposter,
+        isJester: isJester,
+        role: getPlayerRole(playerIndex)
     };
 }
 
@@ -303,11 +332,16 @@ function tallyVotes() {
 
 function getGameResults() {
     const voteResults = tallyVotes();
-    const imposterCaught = voteResults.votedOutIndex === gameState.imposterIndex;
+    const imposterCaught = voteResults.votedOutIndex === gameState.imposterIndex && !voteResults.tie;
+    const jesterWins = gameState.jesterIndex >= 0 && voteResults.votedOutIndex === gameState.jesterIndex && !voteResults.tie;
 
     return {
         imposterIndex: gameState.imposterIndex,
         imposterName: gameState.players[gameState.imposterIndex].name,
+        jesterIndex: gameState.jesterIndex,
+        jesterName: gameState.jesterIndex >= 0 ? gameState.players[gameState.jesterIndex].name : null,
+        jesterEnabled: gameState.jesterEnabled,
+        jesterWins: jesterWins,
         secretWord: gameState.currentWordData.word,
         topic: gameState.currentWordData.topic,
         votedOutIndex: voteResults.votedOutIndex,

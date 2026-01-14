@@ -112,21 +112,75 @@ function initSocket() {
     });
 }
 
+// Wait for socket connection with timeout
+function waitForConnection(timeoutMs = 5000) {
+    return new Promise((resolve, reject) => {
+        if (isConnected) {
+            resolve();
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            cleanup();
+            reject(new Error('Connection timeout - server may be unavailable'));
+        }, timeoutMs);
+
+        const onConnect = () => {
+            cleanup();
+            resolve();
+        };
+
+        const onError = (error) => {
+            cleanup();
+            reject(new Error('Failed to connect to server'));
+        };
+
+        const cleanup = () => {
+            clearTimeout(timeout);
+            if (socket) {
+                socket.off('connect', onConnect);
+                socket.off('connect_error', onError);
+            }
+        };
+
+        if (socket) {
+            socket.once('connect', onConnect);
+            socket.once('connect_error', onError);
+        } else {
+            reject(new Error('Socket not initialized'));
+        }
+    });
+}
+
 // Socket actions
 function socketCreateRoom(playerName, callback) {
-    if (!socket || !isConnected) {
-        callback({ success: false, error: 'Not connected to server' });
+    if (!socket) {
+        callback({ success: false, error: 'Socket not initialized' });
         return;
     }
-    socket.emit('create-room', playerName, callback);
+
+    waitForConnection()
+        .then(() => {
+            socket.emit('create-room', playerName, callback);
+        })
+        .catch((error) => {
+            callback({ success: false, error: error.message });
+        });
 }
 
 function socketJoinRoom(playerName, roomCode, callback) {
-    if (!socket || !isConnected) {
-        callback({ success: false, error: 'Not connected to server' });
+    if (!socket) {
+        callback({ success: false, error: 'Socket not initialized' });
         return;
     }
-    socket.emit('join-room', { playerName, roomCode }, callback);
+
+    waitForConnection()
+        .then(() => {
+            socket.emit('join-room', { playerName, roomCode }, callback);
+        })
+        .catch((error) => {
+            callback({ success: false, error: error.message });
+        });
 }
 
 function socketStartGame(callback) {
@@ -159,6 +213,11 @@ function socketPlayAgain() {
     socket.emit('play-again');
 }
 
+function socketLeaveRoom() {
+    if (!socket) return;
+    socket.emit('leave-room');
+}
+
 // UI helper
 function updateConnectionStatus(connected) {
     const indicator = document.getElementById('connection-status');
@@ -185,4 +244,5 @@ window.socketSubmitWord = socketSubmitWord;
 window.socketProceedToVoting = socketProceedToVoting;
 window.socketCastVote = socketCastVote;
 window.socketPlayAgain = socketPlayAgain;
+window.socketLeaveRoom = socketLeaveRoom;
 window.isConnected = () => isConnected;
