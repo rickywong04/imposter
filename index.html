@@ -1,0 +1,2129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Google Analytics (injected from env) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{GA_TRACKING_ID}}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', '{{GA_TRACKING_ID}}');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Impostor - Party Game</title>
+    <meta name="description" content="A multiplayer party game. Trust no one, find the impostor!">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Quicksand:wght@500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body,
+        .font-nunito {
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .font-quicksand {
+            font-family: 'Quicksand', sans-serif;
+        }
+    </style>
+</head>
+
+<body
+    class="flex min-h-screen flex-col items-center justify-center bg-white font-nunito text-gray-600 antialiased selection:bg-red-100 selection:text-red-600">
+
+    <!-- Spline 3D Background (injected from env) -->
+    <div class="spline-container fixed inset-0 w-full h-screen -z-10 pointer-events-none"
+        style="mask-image: linear-gradient(to bottom, transparent, black 0%, black 80%, transparent); -webkit-mask-image: linear-gradient(to bottom, transparent, black 0%, black 80%, transparent);">
+        <iframe src="{{SPLINE_URL}}"
+            frameborder="0" width="100%" height="100%" id="aura-spline" style="pointer-events: none;"></iframe>
+    </div>
+
+    <!-- Fallback Background Decoration (shows while Spline loads) -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div
+            class="absolute -top-[10%] left-[20%] h-[600px] w-[600px] rounded-full bg-red-50/60 blur-3xl filter animate-float">
+        </div>
+        <div class="absolute top-[30%] -right-[10%] h-[500px] w-[500px] rounded-full bg-rose-50/60 blur-3xl filter animate-float"
+            style="animation-delay: 1s;"></div>
+        <div class="absolute -bottom-[20%] left-[10%] h-[600px] w-[600px] rounded-full bg-gray-50/60 blur-3xl filter">
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCREEN: LOBBY (Pass to Play / Online)
+         ========================================== -->
+    <div id="screen-lobby" class="game-screen relative z-10">
+        <main class="w-full max-w-md px-6 py-8">
+            <!-- Logo Header -->
+            <div class="text-center mb-10 animate-fade-in-up">
+                <div
+                    class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-xl shadow-red-100 ring-1 ring-gray-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"
+                        class="w-12 h-12 text-gray-800">
+                        <g transform="translate(0 3)">
+                            <circle cx="18" cy="24" r="6" stroke="currentColor" stroke-width="3" />
+                            <circle cx="32" cy="20" r="6" stroke="currentColor" stroke-width="3" />
+                            <circle cx="46" cy="24" r="6" stroke="currentColor" stroke-width="3" />
+                            <g transform="translate(0 -4.5)">
+                                <path d="M8 44c2-8 20-8 22 0" stroke="currentColor" stroke-width="3"
+                                    stroke-linecap="round" />
+                                <g transform="translate(0 -4.5)">
+                                    <path d="M20 46c3-10 21-10 24 0" stroke="currentColor" stroke-width="3"
+                                        stroke-linecap="round" />
+                                </g>
+                                <path d="M34 44c2-8 20-8 22 0" stroke="currentColor" stroke-width="3"
+                                    stroke-linecap="round" />
+                            </g>
+                            <circle cx="46" cy="12" r="7" fill="white" stroke="currentColor" stroke-width="3" />
+                            <g transform="translate(-.9 0)">
+                                <path
+                                    d="M44.5 10.5c.2-1.5 1.5-2.5 3-2.3 1.3.2 2.1 1.2 2 2.3-.1 1.2-1 1.7-1.8 2.2-.7.4-.9.7-.9 1.4"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                                <circle cx="46.8" cy="16" r="0.8" fill="currentColor" />
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+                <h1 class="font-quicksand text-4xl font-semibold tracking-tight text-gray-900">Impostor</h1>
+                <p class="mt-2 text-sm font-medium text-black">Trust no one, find the impostor</p>
+            </div>
+
+            <!-- Game Entry Card -->
+            <div
+                class="overflow-hidden rounded-3xl border border-gray-100 bg-white/80 backdrop-blur-xl shadow-2xl shadow-gray-200/50 animate-fade-in-up stagger-1">
+                <!-- Tabs -->
+                <div class="flex gap-1 border-b border-gray-100 p-2" id="lobby-tabs">
+                    <button id="tab-local" onclick="switchTab('local')"
+                        class="flex-1 rounded-xl bg-red-50 py-3 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-red-100 transition">
+                        <span class="flex items-center justify-center gap-2">
+                            <span class="iconify" data-icon="lucide:smartphone" data-width="18"></span>
+                            Pass to Play
+                        </span>
+                    </button>
+                    <button id="tab-online" onclick="switchTab('online')"
+                        class="flex-1 rounded-xl bg-white py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-50 hover:text-gray-700">
+                        <span class="flex items-center justify-center gap-2">
+                            <span class="iconify" data-icon="lucide:wifi" data-width="18"></span>
+                            Online
+                        </span>
+                    </button>
+                </div>
+
+                <div class="p-8 pb-4">
+                    <!-- Pass to Play Form (Default) -->
+                    <div id="local-form">
+                        <div class="mb-6 flex items-center justify-between">
+                            <h2 class="text-sm font-bold uppercase tracking-wider text-gray-400">Players</h2>
+                            <button onclick="clearAllPlayers()"
+                                class="text-xs font-semibold text-red-500 transition hover:text-red-600 hover:underline">Clear
+                                All</button>
+                        </div>
+
+                        <!-- Player Name Inputs -->
+                        <div id="local-player-inputs" class="mb-6 space-y-3">
+                            <div
+                                class="group flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-red-100 hover:bg-white hover:shadow-sm">
+                                <div class="flex items-center gap-3 flex-1">
+                                    <div
+                                        class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-red-600">
+                                        <span class="font-quicksand text-xs font-bold">1</span>
+                                    </div>
+                                    <input type="text" placeholder="Player 1 name" maxlength="12" data-player-index="0"
+                                        class="local-player-input flex-1 bg-transparent text-sm font-semibold text-gray-700 placeholder-gray-400 focus:outline-none">
+                                </div>
+                                <button type="button" onclick="removePlayerInput(this)"
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-500">
+                                    <span class="iconify" data-icon="lucide:trash-2" data-width="18"></span>
+                                </button>
+                            </div>
+                            <div
+                                class="group flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-red-100 hover:bg-white hover:shadow-sm">
+                                <div class="flex items-center gap-3 flex-1">
+                                    <div
+                                        class="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+                                        <span class="font-quicksand text-xs font-bold">2</span>
+                                    </div>
+                                    <input type="text" placeholder="Player 2 name" maxlength="12" data-player-index="1"
+                                        class="local-player-input flex-1 bg-transparent text-sm font-semibold text-gray-700 placeholder-gray-400 focus:outline-none">
+                                </div>
+                                <button type="button" onclick="removePlayerInput(this)"
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-500">
+                                    <span class="iconify" data-icon="lucide:trash-2" data-width="18"></span>
+                                </button>
+                            </div>
+                            <div
+                                class="group flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-red-100 hover:bg-white hover:shadow-sm">
+                                <div class="flex items-center gap-3 flex-1">
+                                    <div
+                                        class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                        <span class="font-quicksand text-xs font-bold">3</span>
+                                    </div>
+                                    <input type="text" placeholder="Player 3 name" maxlength="12" data-player-index="2"
+                                        class="local-player-input flex-1 bg-transparent text-sm font-semibold text-gray-700 placeholder-gray-400 focus:outline-none">
+                                </div>
+                                <button type="button" onclick="removePlayerInput(this)"
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-500">
+                                    <span class="iconify" data-icon="lucide:trash-2" data-width="18"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Add Player Input -->
+                        <form class="relative group mb-6" onsubmit="event.preventDefault(); addPlayerFromInput();">
+                            <div
+                                class="absolute left-4 top-1/2 flex -translate-y-1/2 text-gray-400 group-focus-within:text-red-500 transition-colors">
+                                <span class="iconify" data-icon="lucide:user-plus" data-width="20"></span>
+                            </div>
+                            <input type="text" id="add-player-input" placeholder="Add player name..." maxlength="12"
+                                class="w-full rounded-2xl border border-gray-200 bg-white py-4 pl-12 pr-14 text-sm font-semibold text-gray-800 placeholder-gray-400 shadow-sm transition focus:border-red-500 focus:outline-none focus:ring-4 focus:ring-red-500/10">
+                            <button type="submit" id="add-player-btn"
+                                class="absolute right-2 top-2 bottom-2 aspect-square rounded-xl bg-gray-50 text-gray-400 transition hover:bg-red-50 hover:text-red-600">
+                                <span class="iconify relative top-0.5" data-icon="lucide:plus-circle"
+                                    data-width="24"></span>
+                            </button>
+                        </form>
+
+                    </div>
+
+                    <div class="border-t border-gray-50 bg-gray-50/50 -mx-8 px-8 pt-6 pb-8 mt-4">
+                        <!-- Game Options -->
+                        <div id="local-game-options" class="mb-8 space-y-4">
+                            <!-- Jester Option -->
+                            <label class="group flex cursor-pointer items-center justify-between rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-purple-400 shadow-sm ring-1 ring-gray-100 transition group-hover:text-purple-500 group-hover:ring-purple-100">
+                                        <span class="text-xl">🃏</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-semibold text-gray-700">Include Jester</span>
+                                        <span class="text-xs text-gray-400">One player wins by getting voted out</span>
+                                    </div>
+                                </div>
+                                <div class="relative flex items-center">
+                                    <input type="checkbox" id="jester-enabled"
+                                        class="peer h-5 w-5 appearance-none rounded-md border-2 border-gray-200 bg-white transition checked:border-red-500 checked:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20">
+                                    <span
+                                        class="iconify pointer-events-none absolute left-0.5 top-0.5 text-white opacity-0 transition peer-checked:opacity-100"
+                                        data-icon="lucide:check" data-width="16"></span>
+                                </div>
+                            </label>
+
+                            <!-- Hide Topic Option -->
+                            <label class="group flex cursor-pointer items-center justify-between rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-amber-400 shadow-sm ring-1 ring-gray-100 transition group-hover:text-amber-500 group-hover:ring-amber-100">
+                                        <span class="text-xl">🙈</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-semibold text-gray-700">Hide Topic from Crew</span>
+                                        <span class="text-xs text-gray-400">Crew only sees the word</span>
+                                    </div>
+                                </div>
+                                <div class="relative flex items-center">
+                                    <input type="checkbox" id="no-topic-reveal"
+                                        class="peer h-5 w-5 appearance-none rounded-md border-2 border-gray-200 bg-white transition checked:border-red-500 checked:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20">
+                                    <span
+                                        class="iconify pointer-events-none absolute left-0.5 top-0.5 text-white opacity-0 transition peer-checked:opacity-100"
+                                        data-icon="lucide:check" data-width="16"></span>
+                                </div>
+                            </label>
+
+                            <!-- Impostor Hint Option -->
+                            <label class="group flex cursor-pointer items-center justify-between rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-emerald-400 shadow-sm ring-1 ring-gray-100 transition group-hover:text-emerald-500 group-hover:ring-emerald-100">
+                                        <span class="text-xl">💡</span>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-semibold text-gray-700">Give Impostor a Hint</span>
+                                        <span class="text-xs text-gray-400">Impostor gets a related word</span>
+                                    </div>
+                                </div>
+                                <div class="relative flex items-center">
+                                    <input type="checkbox" id="impostor-hint" checked
+                                        class="peer h-5 w-5 appearance-none rounded-md border-2 border-gray-200 bg-white transition checked:border-red-500 checked:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20">
+                                    <span
+                                        class="iconify pointer-events-none absolute left-0.5 top-0.5 text-white opacity-0 transition peer-checked:opacity-100"
+                                        data-icon="lucide:check" data-width="16"></span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Action Button -->
+                        <button onclick="handleLocalStart()" type="button"
+                            class="group relative w-full overflow-hidden rounded-2xl bg-gray-900 py-4 text-sm font-bold text-white shadow-xl shadow-gray-900/10 transition hover:scale-[1.02] hover:bg-gray-800 hover:shadow-2xl active:scale-[0.98]">
+                            <span class="relative z-10 flex items-center justify-center gap-3">
+                                Start Game
+                                <span class="iconify transition-transform group-hover:translate-x-1"
+                                    data-icon="lucide:play-circle" data-width="20"></span>
+                            </span>
+                            <div
+                                class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-full">
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Online Form (Join/Host) -->
+                    <div id="online-form" class="hidden">
+                        <div class="p-8 pb-4">
+                            <!-- Sub-tabs for Join/Host -->
+                            <div class="flex gap-2 mb-6">
+                                <button id="tab-join" onclick="switchOnlineTab('join')"
+                                    class="flex-1 rounded-xl bg-red-50 py-2.5 text-sm font-semibold text-red-600 ring-1 ring-red-100">
+                                    Join Game
+                                </button>
+                                <button id="tab-host" onclick="switchOnlineTab('host')"
+                                    class="flex-1 rounded-xl bg-white py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-50 transition">
+                                    Host New
+                                </button>
+                            </div>
+
+                            <!-- Join Form -->
+                            <form id="join-form" class="space-y-4" onsubmit="event.preventDefault(); handleJoin();">
+                                <div class="relative group">
+                                    <label
+                                        class="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">Nickname</label>
+                                    <div
+                                        class="absolute left-4 top-[2.4rem] flex text-gray-400 group-focus-within:text-red-500 transition-colors">
+                                        <span class="iconify" data-icon="lucide:user" data-width="18"></span>
+                                    </div>
+                                    <input type="text" id="join-nickname" placeholder="Enter your name" maxlength="12"
+                                        required
+                                        class="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-gray-800 placeholder-gray-400 shadow-sm transition focus:border-red-500 focus:outline-none focus:ring-4 focus:ring-red-500/10">
+                                </div>
+
+                                <div class="relative group">
+                                    <label
+                                        class="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">Room
+                                        Code</label>
+                                    <div
+                                        class="absolute left-4 top-[2.4rem] flex text-gray-400 group-focus-within:text-red-500 transition-colors">
+                                        <span class="iconify" data-icon="lucide:hash" data-width="18"></span>
+                                    </div>
+                                    <input type="text" id="join-code" placeholder="ABCD" maxlength="4" required
+                                        class="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-11 pr-4 text-sm font-bold uppercase tracking-widest text-gray-800 placeholder-gray-400 shadow-sm transition focus:border-red-500 focus:outline-none focus:ring-4 focus:ring-red-500/10">
+                                </div>
+                            </form>
+
+                            <!-- Host Form -->
+                            <form id="host-form" class="space-y-4 hidden"
+                                onsubmit="event.preventDefault(); handleHost();">
+                                <div class="relative group">
+                                    <label
+                                        class="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">Your
+                                        Nickname</label>
+                                    <div
+                                        class="absolute left-4 top-[2.4rem] flex text-gray-400 group-focus-within:text-red-500 transition-colors">
+                                        <span class="iconify" data-icon="lucide:user" data-width="18"></span>
+                                    </div>
+                                    <input type="text" id="host-nickname" placeholder="Enter your name" maxlength="12"
+                                        required
+                                        class="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-gray-800 placeholder-gray-400 shadow-sm transition focus:border-red-500 focus:outline-none focus:ring-4 focus:ring-red-500/10">
+                                </div>
+                            </form>
+                        </div>
+
+                        <div
+                            class="border-t border-gray-50 bg-gray-50/50 -mx-8 -mb-4 px-8 pt-6 pb-8 mt-4 rounded-b-3xl">
+                            <!-- Join Button -->
+                            <button id="join-submit-btn" onclick="handleJoin()" type="button"
+                                class="group relative w-full overflow-hidden rounded-2xl bg-gray-900 py-4 text-sm font-bold text-white shadow-xl shadow-gray-900/10 transition hover:scale-[1.02] hover:bg-gray-800 hover:shadow-2xl active:scale-[0.98]">
+                                <span class="relative z-10 flex items-center justify-center gap-3">
+                                    Enter Lobby
+                                    <span class="iconify transition-transform group-hover:translate-x-1"
+                                        data-icon="lucide:arrow-right" data-width="20"></span>
+                                </span>
+                                <div
+                                    class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-full">
+                                </div>
+                            </button>
+
+                            <!-- Host Button -->
+                            <button id="host-submit-btn" onclick="handleHost()" type="button"
+                                class="group relative w-full overflow-hidden rounded-2xl bg-gray-900 py-4 text-sm font-bold text-white shadow-xl shadow-gray-900/10 transition hover:scale-[1.02] hover:bg-gray-800 hover:shadow-2xl active:scale-[0.98] hidden">
+                                <span class="relative z-10 flex items-center justify-center gap-3">
+                                    Create Room
+                                    <span class="iconify transition-transform group-hover:translate-x-1"
+                                        data-icon="lucide:plus-circle" data-width="20"></span>
+                                </span>
+                                <div
+                                    class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-full">
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-8 text-center animate-fade-in stagger-2">
+                <button onclick="showRules()"
+                    class="group inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-500 transition hover:border-gray-300 hover:text-gray-700 hover:shadow-sm">
+                    <span class="iconify" data-icon="lucide:book-open" data-width="14"></span>
+                    How to Play
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         SCREEN: WAITING ROOM
+         ========================================== -->
+    <div id="screen-waiting" class="game-screen relative z-10 hidden">
+        <main class="w-full max-w-md px-6">
+            <!-- Back Button -->
+            <button onclick="handleBackToLobby()"
+                class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition">
+                <span class="iconify" data-icon="lucide:arrow-left" data-width="16"></span>
+                Leave Room
+            </button>
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 font-quicksand">Waiting Room</h2>
+                <div class="mt-2 flex items-center justify-center gap-2">
+                    <span class="text-sm text-gray-500">Room Code:</span>
+                    <span id="room-code-display"
+                        class="rounded-lg bg-gray-900 px-3 py-1 text-lg font-bold tracking-widest text-white"></span>
+                </div>
+            </div>
+
+            <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-gray-200/50">
+                <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-semibold text-gray-900">Players <span id="player-count"
+                                class="text-gray-400">(0/8)</span></h3>
+                        <span class="text-xs text-gray-400">Min 3 players</span>
+                    </div>
+                </div>
+
+                <div id="player-list" class="divide-y divide-gray-50 p-4 space-y-2 max-h-64 overflow-y-auto">
+                    <!-- Players will be inserted here -->
+                </div>
+
+                <!-- Game Options (Host Only) -->
+                <div id="waiting-room-options" class="border-t border-gray-100 p-4 space-y-3 hidden">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Game Options (Host)</p>
+
+                    <!-- Jester Option -->
+                    <label
+                        class="group flex items-center gap-3 rounded-xl bg-purple-50 p-3 cursor-pointer hover:bg-purple-100 transition">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" id="waiting-jester-enabled"
+                                class="peer h-5 w-5 appearance-none rounded border-2 border-purple-300 bg-white transition checked:border-purple-600 checked:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/20">
+                            <span class="pointer-events-none absolute opacity-0 transition peer-checked:opacity-100">
+                                <span class="iconify text-white" data-icon="lucide:check" data-width="14"
+                                    data-stroke-width="3"></span>
+                            </span>
+                        </div>
+                        <div class="flex-1">
+                            <span class="font-semibold text-purple-700">Include Jester</span>
+                            <p class="text-xs text-purple-500">One player wins by getting voted out (4+ players)</p>
+                        </div>
+                        <span class="text-2xl">🃏</span>
+                    </label>
+
+                    <!-- Game Twist Options -->
+                    <label
+                        class="group flex items-center gap-3 rounded-xl bg-amber-50 p-3 cursor-pointer hover:bg-amber-100 transition">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" id="waiting-no-topic-reveal"
+                                class="peer h-5 w-5 appearance-none rounded border-2 border-amber-300 bg-white transition checked:border-amber-600 checked:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500/20">
+                            <span class="pointer-events-none absolute opacity-0 transition peer-checked:opacity-100">
+                                <span class="iconify text-white" data-icon="lucide:check" data-width="14"
+                                    data-stroke-width="3"></span>
+                            </span>
+                        </div>
+                        <div class="flex-1">
+                            <span class="font-semibold text-amber-700">Hide Topic from Crew</span>
+                            <p class="text-xs text-amber-500">Crew only sees the word, not the category</p>
+                        </div>
+                        <span class="text-2xl">🙈</span>
+                    </label>
+                    <label
+                        class="group flex items-center gap-3 rounded-xl bg-emerald-50 p-3 cursor-pointer hover:bg-emerald-100 transition">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" id="waiting-impostor-hint" checked
+                                class="peer h-5 w-5 appearance-none rounded border-2 border-emerald-300 bg-white transition checked:border-emerald-600 checked:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                            <span class="pointer-events-none absolute opacity-0 transition peer-checked:opacity-100">
+                                <span class="iconify text-white" data-icon="lucide:check" data-width="14"
+                                    data-stroke-width="3"></span>
+                            </span>
+                        </div>
+                        <div class="flex-1">
+                            <span class="font-semibold text-emerald-700">Give Impostor a Hint</span>
+                            <p class="text-xs text-emerald-500">Impostor gets a related word to help blend in</p>
+                        </div>
+                        <span class="text-2xl">💡</span>
+                    </label>
+                </div>
+
+                <div class="border-t border-gray-100 bg-gray-50/50 p-6">
+                    <button id="start-game-btn" onclick="handleStartGame()" disabled
+                        class="w-full rounded-xl bg-red-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-500 transition">
+                        <span class="flex items-center justify-center gap-2">
+                            Start Game
+                            <span class="iconify" data-icon="lucide:play" data-width="16"></span>
+                        </span>
+                    </button>
+                    <p id="start-game-hint" class="mt-2 text-center text-xs text-gray-400"></p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         SCREEN: ROLE REVEAL
+         ========================================== -->
+    <div id="screen-reveal" class="game-screen relative z-10 hidden">
+        <main class="w-full max-w-md px-6 text-center">
+            <!-- Back Button -->
+            <button onclick="handleBackToLobby(true)"
+                class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition">
+                <span class="iconify" data-icon="lucide:arrow-left" data-width="16"></span>
+                Leave Game
+            </button>
+            <div class="mb-6">
+                <p class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Pass device to</p>
+                <h2 id="reveal-player-name" class="mt-2 text-3xl font-bold text-gray-900 font-quicksand"></h2>
+            </div>
+
+            <div id="reveal-card-container">
+                <!-- Hidden Card -->
+                <div id="reveal-hidden" class="cursor-pointer" onclick="revealRole()">
+                    <div
+                        class="mx-auto w-72 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-12 transition hover:border-red-300 hover:bg-red-50/30">
+                        <div class="text-6xl mb-4">🔒</div>
+                        <p class="text-gray-500 font-medium">Tap to reveal your role</p>
+                        <p class="mt-2 text-xs text-gray-400">Make sure only you can see!</p>
+                    </div>
+                </div>
+
+                <!-- Revealed Card -->
+                <div id="reveal-shown" class="hidden">
+                    <div id="role-card"
+                        class="mx-auto w-72 rounded-2xl border border-gray-100 bg-white p-8 shadow-xl animate-card-reveal">
+                        <div id="role-icon" class="text-6xl mb-4"></div>
+                        <div class="mb-4">
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Topic</p>
+                            <p id="role-topic" class="text-lg font-bold text-gray-900 font-quicksand"></p>
+                        </div>
+                        <div class="rounded-xl bg-gray-50 p-4">
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Secret Word</p>
+                            <p id="role-word" class="text-2xl font-bold font-quicksand"></p>
+                        </div>
+                        <p id="role-hint" class="mt-4 text-xs text-gray-400"></p>
+                    </div>
+                    <button onclick="handleReadyClick()"
+                        class="mt-6 btn-primary rounded-xl bg-gray-900 px-8 py-3 text-sm font-semibold text-white shadow-lg hover:bg-gray-800">
+                        Got it! Next Player
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         SCREEN: LOCAL GAME START (Pass to Play only)
+         ========================================== -->
+    <div id="screen-local-start" class="game-screen relative z-10 hidden">
+        <main class="w-full max-w-md px-6 text-center">
+            <!-- Back Button -->
+            <button onclick="handleBackToLobby(true)"
+                class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition">
+                <span class="iconify" data-icon="lucide:arrow-left" data-width="16"></span>
+                Leave Game
+            </button>
+            <div class="mb-6 animate-fade-in-up">
+                <div class="text-6xl mb-4">🎮</div>
+                <h2 class="text-3xl font-bold text-gray-900 font-quicksand">Let's Play!</h2>
+                <p class="mt-2 text-gray-500">Everyone has seen their role. Time to talk!</p>
+            </div>
+
+            <!-- Game Info Card -->
+            <div class="rounded-2xl border border-gray-100 bg-white shadow-xl mb-6 animate-fade-in-up stagger-1">
+                <!-- Category -->
+                <div class="p-6 border-b border-gray-50">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Category</p>
+                    <p id="local-start-topic" class="text-2xl font-bold text-gray-900 font-quicksand"></p>
+                </div>
+
+                <!-- First Player -->
+                <div class="p-6 bg-red-50">
+                    <p class="text-xs font-semibold text-red-400 uppercase tracking-wider mb-2">First Player</p>
+                    <div class="flex items-center justify-center gap-3">
+                        <span id="local-start-first-avatar" class="text-4xl"></span>
+                        <span id="local-start-first-name" class="text-2xl font-bold text-red-600 font-quicksand"></span>
+                    </div>
+                </div>
+
+                <!-- Turn Order -->
+                <div class="p-6">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Turn Order</p>
+                    <div id="local-turn-order" class="flex flex-wrap justify-center gap-2">
+                        <!-- Turn order badges will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="rounded-xl bg-gray-50 p-4 mb-6 text-left animate-fade-in-up stagger-2">
+                <p class="text-sm text-gray-600 leading-relaxed">
+                    <span class="font-semibold">How to play:</span> Take turns saying <span class="font-semibold">one
+                        word</span> related to the secret word.
+                    The impostor only knows the category - try to blend in! After everyone goes, discuss and vote.
+                </p>
+            </div>
+
+            <!-- Reveal Button -->
+            <button onclick="showLocalResult()"
+                class="btn-primary w-full rounded-xl bg-red-500 py-4 text-lg font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-600 animate-fade-in-up stagger-3">
+                <span class="flex items-center justify-center gap-2">
+                    <span class="iconify" data-icon="lucide:eye" data-width="20"></span>
+                    Reveal Impostor
+                </span>
+            </button>
+
+            <p class="mt-3 text-xs text-gray-400 animate-fade-in stagger-4">Tap when everyone has had their turn and
+                discussed</p>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         SCREEN: WORD SUBMISSION (Online mode only)
+         ========================================== -->
+    <div id="screen-submission" class="game-screen relative z-10 hidden">
+        <main class="w-full max-w-md px-6">
+            <!-- Back Button -->
+            <button onclick="handleBackToLobby(true)"
+                class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition">
+                <span class="iconify" data-icon="lucide:arrow-left" data-width="16"></span>
+                Leave Game
+            </button>
+            <div class="text-center mb-6">
+                <div
+                    class="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600 mb-2">
+                    <span class="iconify animate-pulse" data-icon="lucide:circle-dot" data-width="12"></span>
+                    Round in Progress
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 font-quicksand">Say a Related Word</h2>
+                <p id="submission-topic-line" class="mt-1 text-sm text-gray-500">Topic: <span id="submission-topic"
+                        class="font-semibold text-gray-700"></span></p>
+            </div>
+
+            <!-- Current Turn Display -->
+            <div class="mb-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-lg text-center">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Current Turn</p>
+                <div class="flex items-center justify-center gap-3">
+                    <span id="current-turn-avatar" class="text-4xl"></span>
+                    <span id="current-turn-name" class="text-xl font-bold text-gray-900 font-quicksand"></span>
+                </div>
+                <p id="turn-status" class="mt-3 text-sm text-gray-500"></p>
+            </div>
+
+            <!-- Submission Input -->
+            <div class="mb-6">
+                <form onsubmit="event.preventDefault(); handleWordSubmit();" class="flex gap-2">
+                    <input type="text" id="word-input" placeholder="Enter your word..." maxlength="30" required
+                        class="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 input-focus">
+                    <button type="submit"
+                        class="btn-primary rounded-xl bg-red-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-600">
+                        Submit
+                    </button>
+                </form>
+            </div>
+
+            <!-- Submitted Words -->
+            <div class="rounded-2xl border border-gray-100 bg-white shadow-lg overflow-hidden">
+                <div class="border-b border-gray-50 bg-gray-50/50 px-6 py-4">
+                    <h3 class="font-semibold text-gray-900">Submitted Words</h3>
+                </div>
+                <div id="submitted-words-list" class="p-4 space-y-2 max-h-48 overflow-y-auto">
+                    <p class="text-center text-sm text-gray-400 py-4">Waiting for submissions...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         SCREEN: DISCUSSION
+         ========================================== -->
+    <div id="screen-discussion" class="game-screen relative z-10 hidden">
+        <main class="w-full max-w-md px-6 text-center">
+            <!-- Back Button -->
+            <button onclick="handleBackToLobby(true)"
+                class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition">
+                <span class="iconify" data-icon="lucide:arrow-left" data-width="16"></span>
+                Leave Game
+            </button>
+            <div class="mb-6">
+                <div
+                    class="inline-flex items-center gap-2 rounded-full bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-600 mb-2">
+                    <span class="iconify" data-icon="lucide:message-circle" data-width="12"></span>
+                    Discussion Phase
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 font-quicksand">Find the Impostor!</h2>
+                <p class="mt-1 text-sm text-gray-500">Discuss and figure out who doesn't know the word</p>
+            </div>
+
+            <!-- Timer -->
+            <div class="mb-6 flex justify-center">
+                <div class="rounded-full bg-yellow-100 px-6 py-3">
+                    <div class="flex items-center gap-2 text-yellow-700">
+                        <span class="iconify" data-icon="lucide:clock" data-width="20"></span>
+                        <span id="discussion-timer" class="text-2xl font-bold">30</span>
+                        <span class="text-sm font-medium">seconds</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Submitted Words -->
+            <div class="rounded-2xl border border-gray-100 bg-white shadow-lg mb-6">
+                <div class="border-b border-gray-50 bg-gray-50/50 px-6 py-4">
+                    <h3 class="font-semibold text-gray-900">All Words</h3>
+                </div>
+                <div id="discussion-words-list" class="p-4 grid grid-cols-2 gap-2">
+                    <!-- Words will be inserted here -->
+                </div>
+            </div>
+
+            <button id="proceed-to-vote-btn" onclick="handleProceedToVote()"
+                class="btn-primary rounded-xl bg-red-500 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-600">
+                <span class="flex items-center justify-center gap-2">
+                    Proceed to Vote
+                    <span class="iconify" data-icon="lucide:arrow-right" data-width="16"></span>
+                </span>
+            </button>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         SCREEN: VOTING
+         ========================================== -->
+    <div id="screen-voting" class="game-screen relative z-10 hidden">
+        <main class="w-full max-w-md px-6">
+            <!-- Back Button -->
+            <button onclick="handleBackToLobby(true)"
+                class="mb-4 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition">
+                <span class="iconify" data-icon="lucide:arrow-left" data-width="16"></span>
+                Leave Game
+            </button>
+            <div class="text-center mb-6">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Voting</p>
+                <h2 id="voting-player-name" class="mt-2 text-2xl font-bold text-gray-900 font-quicksand"></h2>
+                <p class="mt-1 text-sm text-gray-500">Who do you think is the impostor?</p>
+            </div>
+
+            <div id="voting-options" class="space-y-3 mb-6">
+                <!-- Vote options will be inserted here -->
+            </div>
+
+            <button id="confirm-vote-btn" onclick="handleConfirmVote()" disabled
+                class="w-full btn-primary rounded-xl bg-red-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                Confirm Vote
+            </button>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         SCREEN: RESULTS
+         ========================================== -->
+    <div id="screen-results" class="game-screen relative z-10 hidden">
+        <main class="w-full max-w-md px-6 text-center">
+            <!-- Result Header -->
+            <div id="result-header" class="mb-8">
+                <!-- Dynamic content based on result -->
+            </div>
+
+            <!-- Results Card -->
+            <div class="rounded-2xl border border-gray-100 bg-white shadow-xl overflow-hidden mb-6">
+                <div class="p-6">
+                    <div class="mb-6">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">The Impostor
+                            Was
+                        </p>
+                        <p id="result-impostor-name" class="text-2xl font-bold text-red-500 font-quicksand"></p>
+                    </div>
+                    <!-- Jester Result (hidden by default) -->
+                    <div id="result-jester-section" class="mb-6 hidden">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">The Jester Was</p>
+                        <p id="result-jester-name" class="text-2xl font-bold text-purple-500 font-quicksand"></p>
+                    </div>
+                    <div class="mb-6 rounded-xl bg-gray-50 p-4">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">The Secret Word
+                        </p>
+                        <p id="result-secret-word" class="text-xl font-bold text-gray-900 font-quicksand"></p>
+                        <p id="result-topic" class="text-sm text-gray-500"></p>
+                    </div>
+                </div>
+
+                <!-- Vote Tally -->
+                <div class="border-t border-gray-100 bg-gray-50/50 p-6">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Vote Results</h4>
+                    <div id="vote-tally" class="space-y-2">
+                        <!-- Tally will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Twist Options for Next Round (local mode only) -->
+            <div id="results-twists-section" class="mb-4 hidden space-y-2">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Next Round Options</p>
+
+                <!-- Jester Toggle -->
+                <div id="results-jester-toggle">
+                    <label
+                        class="group flex items-center gap-3 rounded-xl bg-purple-50 p-3 cursor-pointer hover:bg-purple-100 transition">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" id="jester-next-round"
+                                class="peer h-5 w-5 appearance-none rounded border-2 border-purple-300 bg-white transition checked:border-purple-600 checked:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/20">
+                            <span class="pointer-events-none absolute opacity-0 transition peer-checked:opacity-100">
+                                <span class="iconify text-white" data-icon="lucide:check" data-width="14"
+                                    data-stroke-width="3"></span>
+                            </span>
+                        </div>
+                        <div class="flex-1 text-left">
+                            <span class="font-semibold text-purple-700">Include Jester</span>
+                            <p class="text-xs text-purple-500">One player wins by getting voted out</p>
+                        </div>
+                        <span class="text-2xl">🃏</span>
+                    </label>
+                </div>
+
+                <!-- Hide Topic from Crew -->
+                <label
+                    class="group flex items-center gap-3 rounded-xl bg-amber-50 p-3 cursor-pointer hover:bg-amber-100 transition">
+                    <div class="relative flex items-center justify-center">
+                        <input type="checkbox" id="no-topic-reveal-next-round"
+                            class="peer h-5 w-5 appearance-none rounded border-2 border-amber-300 bg-white transition checked:border-amber-600 checked:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500/20">
+                        <span class="pointer-events-none absolute opacity-0 transition peer-checked:opacity-100">
+                            <span class="iconify text-white" data-icon="lucide:check" data-width="14"
+                                data-stroke-width="3"></span>
+                        </span>
+                    </div>
+                    <div class="flex-1 text-left">
+                        <span class="font-semibold text-amber-700">Hide Topic from Crew</span>
+                        <p class="text-xs text-amber-500">Crew only sees the word, not the category</p>
+                    </div>
+                    <span class="text-2xl">🙈</span>
+                </label>
+
+                <!-- Give Impostor a Hint -->
+                <label
+                    class="group flex items-center gap-3 rounded-xl bg-emerald-50 p-3 cursor-pointer hover:bg-emerald-100 transition">
+                    <div class="relative flex items-center justify-center">
+                        <input type="checkbox" id="impostor-hint-next-round"
+                            class="peer h-5 w-5 appearance-none rounded border-2 border-emerald-300 bg-white transition checked:border-emerald-600 checked:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                        <span class="pointer-events-none absolute opacity-0 transition peer-checked:opacity-100">
+                            <span class="iconify text-white" data-icon="lucide:check" data-width="14"
+                                data-stroke-width="3"></span>
+                        </span>
+                    </div>
+                    <div class="flex-1 text-left">
+                        <span class="font-semibold text-emerald-700">Give Impostor a Hint</span>
+                        <p class="text-xs text-emerald-500">Impostor gets a related word to help blend in</p>
+                    </div>
+                    <span class="text-2xl">💡</span>
+                </label>
+            </div>
+
+            <!-- Buttons Container -->
+            <div id="results-buttons" class="space-y-3">
+                <button onclick="handlePlayAgain()"
+                    class="btn-primary w-full rounded-xl bg-red-500 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-red-200 hover:bg-red-600">
+                    <span class="flex items-center justify-center gap-2">
+                        Play Again
+                        <span class="iconify" data-icon="lucide:refresh-cw" data-width="16"></span>
+                    </span>
+                </button>
+                <button onclick="handleNewGame()"
+                    class="w-full rounded-xl bg-gray-100 px-8 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-200 transition">
+                    <span class="flex items-center justify-center gap-2">
+                        <span class="iconify" data-icon="lucide:users" data-width="16"></span>
+                        Change Players
+                    </span>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         MODAL: RULES
+         ========================================== -->
+    <div id="rules-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="absolute inset-0 bg-black/50" onclick="closeRules()"></div>
+        <div
+            class="relative max-w-md w-full max-h-[80vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl animate-fade-in-up">
+            <button onclick="closeRules()" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100">
+                <span class="iconify text-gray-400" data-icon="lucide:x" data-width="20"></span>
+            </button>
+
+            <h2 class="text-2xl font-bold text-gray-900 font-quicksand mb-4">How to Play</h2>
+
+            <div class="space-y-4 text-sm text-gray-600">
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-1">Goal</h3>
+                    <p>Find the <span class="font-semibold">Impostor</span> — the player who doesn't know the secret
+                        word.</p>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-1">Setup</h3>
+                    <p>Everyone sees a topic and secret word, except the Impostor who only sees the topic.</p>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-1">Gameplay</h3>
+                    <p>Take turns saying one word related to the secret. The Impostor must blend in without knowing what
+                        it is. After everyone goes, discuss who seemed suspicious.</p>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-1">Voting</h3>
+                    <p>Everyone votes for who they think is the Impostor. Most votes gets eliminated.</p>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-gray-900 mb-1">Winning</h3>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li><span class="font-semibold">Crew wins</span> by voting out the Impostor</li>
+                        <li><span class="font-semibold">Impostor wins</span> by avoiding elimination</li>
+                        <li><span class="font-semibold">Jester wins</span> by getting voted out (optional role, 4+
+                            players)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Word Database -->
+    <script src="wordDatabase.js"></script>
+
+    <!-- Game Logic Script -->
+    <script src="game.js"></script>
+
+    <!-- Socket.io Client -->
+    <script src="socketClient.js"></script>
+
+    <!-- UI Controller Script -->
+    <script>
+        // ===========================================
+        // UI STATE
+        // ===========================================
+        let currentVoterIndex = 0;
+        let selectedVote = -1;
+        let isLocalMode = false;  // Track if we're in Pass to Play mode
+
+        // ===========================================
+        // SCREEN MANAGEMENT
+        // ===========================================
+        function handleBackToLobby(confirmLeave = false) {
+            if (confirmLeave) {
+                if (!confirm('Are you sure you want to leave the game?')) {
+                    return;
+                }
+            }
+
+            // Stop any running timers
+            if (typeof stopTimer === 'function') {
+                stopTimer();
+            }
+
+            // Disconnect from socket if in online mode
+            if (!isLocalMode && typeof socketLeaveRoom === 'function') {
+                socketLeaveRoom();
+            }
+
+            // Reset game state
+            if (typeof initGame === 'function') {
+                initGame();
+            }
+
+            // Reset local mode flag
+            isLocalMode = false;
+            localPlayerCount = 3;
+
+            // Go back to lobby
+            showScreen('screen-lobby');
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.game-screen').forEach(screen => {
+                screen.classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function switchTab(tab) {
+            const localBtn = document.getElementById('tab-local');
+            const onlineBtn = document.getElementById('tab-online');
+            const localForm = document.getElementById('local-form');
+            const localOptions = document.getElementById('local-game-options');
+            const onlineForm = document.getElementById('online-form');
+
+            if (tab === 'local') {
+                localBtn.classList.add('bg-red-50', 'shadow-sm', 'ring-1', 'ring-red-100', 'text-red-600', 'font-semibold');
+                localBtn.classList.remove('bg-white', 'text-gray-500', 'font-medium');
+                onlineBtn.classList.remove('bg-red-50', 'shadow-sm', 'ring-1', 'ring-red-100', 'text-red-600', 'font-semibold');
+                onlineBtn.classList.add('bg-white', 'text-gray-500', 'font-medium');
+                localForm.classList.remove('hidden');
+                if (localOptions) localOptions.parentElement.classList.remove('hidden');
+                onlineForm.classList.add('hidden');
+            } else {
+                onlineBtn.classList.add('bg-red-50', 'shadow-sm', 'ring-1', 'ring-red-100', 'text-red-600', 'font-semibold');
+                onlineBtn.classList.remove('bg-white', 'text-gray-500', 'font-medium');
+                localBtn.classList.remove('bg-red-50', 'shadow-sm', 'ring-1', 'ring-red-100', 'text-red-600', 'font-semibold');
+                localBtn.classList.add('bg-white', 'text-gray-500', 'font-medium');
+                onlineForm.classList.remove('hidden');
+                localForm.classList.add('hidden');
+                if (localOptions) localOptions.parentElement.classList.add('hidden');
+            }
+        }
+
+        function switchOnlineTab(tab) {
+            const joinBtn = document.getElementById('tab-join');
+            const hostBtn = document.getElementById('tab-host');
+            const joinForm = document.getElementById('join-form');
+            const hostForm = document.getElementById('host-form');
+            const joinSubmitBtn = document.getElementById('join-submit-btn');
+            const hostSubmitBtn = document.getElementById('host-submit-btn');
+
+            if (tab === 'join') {
+                joinBtn.classList.add('bg-red-50', 'text-red-600', 'font-semibold', 'ring-1', 'ring-red-100');
+                joinBtn.classList.remove('bg-white', 'text-gray-500', 'font-medium');
+                hostBtn.classList.remove('bg-red-50', 'text-red-600', 'font-semibold', 'ring-1', 'ring-red-100');
+                hostBtn.classList.add('bg-white', 'text-gray-500', 'font-medium');
+                joinForm.classList.remove('hidden');
+                hostForm.classList.add('hidden');
+                if (joinSubmitBtn) joinSubmitBtn.classList.remove('hidden');
+                if (hostSubmitBtn) hostSubmitBtn.classList.add('hidden');
+            } else {
+                hostBtn.classList.add('bg-red-50', 'text-red-600', 'font-semibold', 'ring-1', 'ring-red-100');
+                hostBtn.classList.remove('bg-white', 'text-gray-500', 'font-medium');
+                joinBtn.classList.remove('bg-red-50', 'text-red-600', 'font-semibold', 'ring-1', 'ring-red-100');
+                joinBtn.classList.add('bg-white', 'text-gray-500', 'font-medium');
+                hostForm.classList.remove('hidden');
+                joinForm.classList.add('hidden');
+                if (hostSubmitBtn) hostSubmitBtn.classList.remove('hidden');
+                if (joinSubmitBtn) joinSubmitBtn.classList.add('hidden');
+            }
+        }
+
+        // ===========================================
+        // PASS TO PLAY MODE
+        // ===========================================
+        let localPlayerCount = 3;
+        const playerColors = [
+            { bg: 'bg-red-100', text: 'text-red-600' },
+            { bg: 'bg-orange-100', text: 'text-orange-600' },
+            { bg: 'bg-emerald-100', text: 'text-emerald-600' },
+            { bg: 'bg-blue-100', text: 'text-blue-600' },
+            { bg: 'bg-purple-100', text: 'text-purple-600' },
+            { bg: 'bg-pink-100', text: 'text-pink-600' },
+            { bg: 'bg-cyan-100', text: 'text-cyan-600' },
+            { bg: 'bg-amber-100', text: 'text-amber-600' }
+        ];
+
+        function addPlayerFromInput() {
+            const input = document.getElementById('add-player-input');
+            const name = input.value.trim();
+            if (!name || localPlayerCount >= 8) return;
+
+            addLocalPlayerInput(name);
+            input.value = '';
+            input.focus();
+        }
+
+        function addLocalPlayerInput(name = '') {
+            if (localPlayerCount >= 8) {
+                return;
+            }
+            localPlayerCount++;
+            const colorIndex = (localPlayerCount - 1) % playerColors.length;
+            const color = playerColors[colorIndex];
+
+            const container = document.getElementById('local-player-inputs');
+            const newInput = document.createElement('div');
+            newInput.className = 'group flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-red-100 hover:bg-white hover:shadow-sm animate-fade-in';
+            newInput.innerHTML = `
+                <div class="flex items-center gap-3 flex-1">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full ${color.bg} ${color.text}">
+                        <span class="font-quicksand text-xs font-bold">${localPlayerCount}</span>
+                    </div>
+                    <input type="text" placeholder="Player ${localPlayerCount} name" maxlength="12" data-player-index="${localPlayerCount - 1}" value="${name}"
+                        class="local-player-input flex-1 bg-transparent text-sm font-semibold text-gray-700 placeholder-gray-400 focus:outline-none">
+                </div>
+                <button type="button" onclick="removePlayerInput(this)" class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-500">
+                    <span class="iconify" data-icon="lucide:trash-2" data-width="18"></span>
+                </button>
+            `;
+            container.appendChild(newInput);
+
+            // Focus the new input if no name was provided
+            if (!name) {
+                newInput.querySelector('input').focus();
+            }
+        }
+
+        function removePlayerInput(button) {
+            const row = button.closest('.group');
+            row.remove();
+            localPlayerCount--;
+
+            // Re-number remaining inputs and update colors
+            const inputs = document.querySelectorAll('#local-player-inputs > div');
+            inputs.forEach((div, index) => {
+                const badge = div.querySelector('.rounded-full');
+                const color = playerColors[index % playerColors.length];
+                badge.className = `flex h-8 w-8 items-center justify-center rounded-full ${color.bg} ${color.text}`;
+                badge.querySelector('span').textContent = index + 1;
+                const input = div.querySelector('input');
+                input.setAttribute('data-player-index', index);
+                input.placeholder = `Player ${index + 1} name`;
+            });
+        }
+
+        function clearAllPlayers() {
+            const container = document.getElementById('local-player-inputs');
+            container.innerHTML = '';
+            localPlayerCount = 0;
+
+            // Add back 3 empty inputs
+            addLocalPlayerInput();
+            addLocalPlayerInput();
+            addLocalPlayerInput();
+        }
+
+        function handleLocalStart() {
+            const inputs = document.querySelectorAll('.local-player-input');
+            const names = [];
+
+            inputs.forEach(input => {
+                const name = input.value.trim();
+                if (name) {
+                    names.push(name);
+                }
+            });
+
+            if (names.length < 3) {
+                alert('Need at least 3 players to start!');
+                return;
+            }
+
+            // Get game options
+            const jesterEnabled = document.getElementById('jester-enabled').checked;
+            const noTopicReveal = document.getElementById('no-topic-reveal').checked;
+            const impostorHint = document.getElementById('impostor-hint').checked;
+
+            if (jesterEnabled && names.length < 4) {
+                alert('Need at least 4 players to include a Jester!');
+                return;
+            }
+
+            // Set local mode flag
+            isLocalMode = true;
+
+            // Initialize game with these players
+            initGame();
+            gameState.roomCode = 'LOCAL';
+            gameState.isHost = true;
+
+            // Add all players
+            names.forEach((name, index) => {
+                gameState.players.push({
+                    name: name,
+                    avatar: AVATARS[index % AVATARS.length],
+                    isHost: index === 0
+                });
+            });
+
+            // Start the game immediately with all options
+            const result = startGame({
+                jesterEnabled: jesterEnabled,
+                noTopicReveal: noTopicReveal,
+                impostorHint: impostorHint
+            });
+            if (result.success) {
+                showRevealScreen();
+            } else {
+                alert(result.error);
+            }
+        }
+
+        // ===========================================
+        // ONLINE MODE HANDLERS
+        // ===========================================
+        function handleHost() {
+            const nickname = document.getElementById('host-nickname').value.trim();
+            if (!nickname) return;
+
+            isLocalMode = false;
+
+            // Initialize socket if needed
+            if (typeof initSocket === 'function') {
+                initSocket();
+            }
+
+            // Create room via socket
+            socketCreateRoom(nickname, (result) => {
+                if (result.success) {
+                    gameState.roomCode = result.roomCode;
+                    gameState.players = result.players;
+                    gameState.isHost = true;
+                    showWaitingRoom();
+                } else {
+                    alert(result.error || 'Failed to create room');
+                }
+            });
+        }
+
+        function handleJoin() {
+            const nickname = document.getElementById('join-nickname').value.trim();
+            const code = document.getElementById('join-code').value.trim().toUpperCase();
+            if (!nickname || !code) return;
+
+            isLocalMode = false;
+
+            // Initialize socket if needed
+            if (typeof initSocket === 'function') {
+                initSocket();
+            }
+
+            // Join room via socket
+            socketJoinRoom(nickname, code, (result) => {
+                if (result.success) {
+                    gameState.roomCode = result.roomCode;
+                    gameState.players = result.players;
+                    gameState.isHost = false;
+                    showWaitingRoom();
+                } else {
+                    alert(result.error || 'Failed to join room');
+                }
+            });
+        }
+
+
+
+        function showWaitingRoom() {
+            document.getElementById('room-code-display').textContent = gameState.roomCode;
+            updatePlayerList();
+
+            // Show game options panel only for the host
+            const optionsPanel = document.getElementById('waiting-room-options');
+            if (gameState.isHost) {
+                optionsPanel.classList.remove('hidden');
+
+                // Restore previous game options (for play again)
+                const jesterCheckbox = document.getElementById('waiting-jester-enabled');
+                const noTopicCheckbox = document.getElementById('waiting-no-topic-reveal');
+                const impostorHintCheckbox = document.getElementById('waiting-impostor-hint');
+
+                if (jesterCheckbox) jesterCheckbox.checked = gameState.jesterEnabled || false;
+                if (noTopicCheckbox) noTopicCheckbox.checked = gameState.noTopicReveal || false;
+                if (impostorHintCheckbox) impostorHintCheckbox.checked = gameState.impostorHint !== false;
+            } else {
+                optionsPanel.classList.add('hidden');
+            }
+
+            showScreen('screen-waiting');
+        }
+
+        function updatePlayerList() {
+            const list = document.getElementById('player-list');
+            const count = document.getElementById('player-count');
+            const startBtn = document.getElementById('start-game-btn');
+            const hint = document.getElementById('start-game-hint');
+
+            count.textContent = `(${gameState.players.length}/8)`;
+
+            list.innerHTML = gameState.players.map((player, index) => `
+                <div class="flex items-center gap-3 rounded-xl bg-gray-50 p-3 animate-fade-in">
+                    <span class="text-2xl">${player.avatar}</span>
+                    <span class="font-medium text-gray-900">${player.name}</span>
+                    ${player.isHost ? '<span class="ml-auto rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600">Host</span>' : ''}
+                    ${!player.isHost && gameState.isHost ? `<button onclick="handleRemovePlayer(${index})" class="ml-auto p-1 rounded hover:bg-gray-200"><span class="iconify text-gray-400" data-icon="lucide:x" data-width="16"></span></button>` : ''}
+                </div>
+            `).join('');
+
+            if (canStartGame()) {
+                startBtn.disabled = false;
+                hint.textContent = 'Ready to start!';
+            } else {
+                startBtn.disabled = true;
+                hint.textContent = `Need ${3 - gameState.players.length} more player(s)`;
+            }
+        }
+
+
+        function handleRemovePlayer(index) {
+            removePlayer(index);
+            updatePlayerList();
+        }
+
+        function handleStartGame() {
+            if (isLocalMode) {
+                // Local mode - use existing logic
+                const result = startGame();
+                if (result.success) {
+                    showRevealScreen();
+                } else {
+                    alert(result.error);
+                }
+            } else {
+                // Online mode - get options and use socket
+                const jesterEnabled = document.getElementById('waiting-jester-enabled').checked;
+                const noTopicReveal = document.getElementById('waiting-no-topic-reveal').checked;
+                const impostorHint = document.getElementById('waiting-impostor-hint').checked;
+
+                // Validate jester option
+                if (jesterEnabled && gameState.players.length < 4) {
+                    alert('Need at least 4 players to include a Jester!');
+                    return;
+                }
+
+                const options = {
+                    jesterEnabled: jesterEnabled,
+                    noTopicReveal: noTopicReveal,
+                    impostorHint: impostorHint
+                };
+
+                socketStartGame(options, (result) => {
+                    if (!result.success) {
+                        alert(result.error || 'Failed to start game');
+                    }
+                    // Server will emit 'game-started' event which triggers showOnlineRevealScreen
+                });
+            }
+        }
+
+        // Online reveal screen handler (called from socketClient.js)
+        function showOnlineRevealScreen(data) {
+            // Store personal data
+            gameState.myTopic = data.topic;
+            gameState.myWord = data.word;
+            gameState.myHint = data.hint;
+            gameState.isImpostor = data.isImpostor;
+            gameState.isJester = data.isJester;
+            gameState.myIndex = data.myIndex;
+            gameState.noTopicReveal = data.noTopicReveal;
+            gameState.impostorHint = data.impostorHint;
+
+            // Get DOM elements
+            const topicContainer = document.getElementById('role-topic').parentElement;
+            const wordContainer = document.getElementById('role-word').parentElement;
+            const topicLabel = topicContainer.querySelector('.text-xs');
+            const wordLabel = wordContainer.querySelector('.text-xs');
+            const roleWord = document.getElementById('role-word');
+            const roleCard = document.getElementById('role-card');
+
+            // Reset classes
+            roleWord.classList.remove('text-red-500', 'text-purple-500', 'text-gray-900');
+            roleCard.classList.remove('ring-2', 'ring-red-200', 'ring-purple-200', 'border-red-200');
+
+            if (data.isImpostor) {
+                // Impostor sees: Topic + Hint word (if hint enabled)
+                document.getElementById('role-icon').textContent = '🕵️';
+                topicContainer.classList.remove('hidden');
+                topicLabel.textContent = 'TOPIC';
+                document.getElementById('role-topic').textContent = data.topic;
+
+                if (data.hint) {
+                    wordLabel.textContent = 'HINT';
+                    roleWord.textContent = data.hint;
+                    document.getElementById('role-hint').textContent = 'You are the IMPOSTOR! Use the hint to blend in...';
+                } else {
+                    wordLabel.textContent = 'NO HINT';
+                    roleWord.textContent = '???';
+                    document.getElementById('role-hint').textContent = 'You are the IMPOSTOR! No hint this round - good luck!';
+                }
+                roleWord.classList.add('text-red-500');
+                roleCard.classList.add('ring-2', 'ring-red-200');
+            } else if (data.isJester) {
+                // Jester sees: Word (and topic if not hidden)
+                document.getElementById('role-icon').textContent = '🃏';
+                if (data.topic) {
+                    topicContainer.classList.remove('hidden');
+                    topicLabel.textContent = 'TOPIC';
+                    document.getElementById('role-topic').textContent = data.topic;
+                } else {
+                    topicContainer.classList.add('hidden');
+                }
+                wordLabel.textContent = 'SECRET WORD';
+                roleWord.textContent = data.word;
+                roleWord.classList.add('text-purple-500');
+                roleCard.classList.add('ring-2', 'ring-purple-200');
+                document.getElementById('role-hint').textContent = 'You are the JESTER! Try to get voted out to win.';
+            } else {
+                // Crew sees: Word (and topic if not hidden)
+                document.getElementById('role-icon').textContent = '✅';
+                if (data.topic) {
+                    topicContainer.classList.remove('hidden');
+                    topicLabel.textContent = 'TOPIC';
+                    document.getElementById('role-topic').textContent = data.topic;
+                } else {
+                    topicContainer.classList.add('hidden');
+                }
+                wordLabel.textContent = 'SECRET WORD';
+                roleWord.textContent = data.word;
+                roleWord.classList.add('text-gray-900');
+                document.getElementById('role-hint').textContent = 'Find the impostor! They don\'t know this word.';
+            }
+
+            // Show revealed card directly (no hidden card for online)
+            document.getElementById('reveal-player-name').textContent = 'Your Role';
+            document.getElementById('reveal-hidden').classList.add('hidden');
+            document.getElementById('reveal-shown').classList.remove('hidden');
+
+            // Change button text for online mode
+            const readyBtn = document.querySelector('#reveal-shown button');
+            if (readyBtn) {
+                readyBtn.textContent = "I'm Ready!";
+                readyBtn.onclick = () => {
+                    socketPlayerReady();
+                    readyBtn.disabled = true;
+                    readyBtn.textContent = 'Waiting for others...';
+                };
+            }
+
+            showScreen('screen-reveal');
+        }
+
+        window.showOnlineRevealScreen = showOnlineRevealScreen;
+
+        // ===========================================
+        // REVEAL PHASE
+        // ===========================================
+        function showRevealScreen() {
+            const player = gameState.players[gameState.revealPlayerIndex];
+            document.getElementById('reveal-player-name').textContent = player.name;
+            document.getElementById('reveal-hidden').classList.remove('hidden');
+            document.getElementById('reveal-shown').classList.add('hidden');
+            showScreen('screen-reveal');
+        }
+
+        function revealRole() {
+            const info = getPlayerInfo(gameState.revealPlayerIndex);
+
+            // Get DOM elements
+            const topicContainer = document.getElementById('role-topic').parentElement;
+            const wordContainer = document.getElementById('role-word').parentElement;
+            const topicLabel = topicContainer.querySelector('.text-xs');
+            const wordLabel = wordContainer.querySelector('.text-xs');
+
+            // Reset classes first
+            const roleWord = document.getElementById('role-word');
+            const roleCard = document.getElementById('role-card');
+            roleWord.classList.remove('text-red-500', 'text-purple-500', 'text-gray-900');
+            roleCard.classList.remove('ring-2', 'ring-red-200', 'ring-purple-200');
+
+            if (info.isImpostor) {
+                // Impostor sees: Topic + Hint (if enabled)
+                document.getElementById('role-icon').textContent = '🕵️';
+                topicContainer.classList.remove('hidden');
+                topicLabel.textContent = 'TOPIC';
+                document.getElementById('role-topic').textContent = info.topic;
+
+                if (info.hint) {
+                    wordLabel.textContent = 'HINT';
+                    roleWord.textContent = info.hint;
+                    document.getElementById('role-hint').textContent = 'You are the IMPOSTOR! Use the hint to blend in...';
+                } else {
+                    wordLabel.textContent = 'NO HINT';
+                    roleWord.textContent = '???';
+                    document.getElementById('role-hint').textContent = 'You are the IMPOSTOR! No hint this round - good luck!';
+                }
+                roleWord.classList.add('text-red-500');
+                roleCard.classList.add('ring-2', 'ring-red-200');
+            } else if (info.isJester) {
+                // Jester sees: Word (and topic if not hidden)
+                document.getElementById('role-icon').textContent = '🃏';
+                if (info.topic) {
+                    topicContainer.classList.remove('hidden');
+                    topicLabel.textContent = 'TOPIC';
+                    document.getElementById('role-topic').textContent = info.topic;
+                } else {
+                    topicContainer.classList.add('hidden');
+                }
+                wordLabel.textContent = 'SECRET WORD';
+                roleWord.textContent = info.word;
+                roleWord.classList.add('text-purple-500');
+                roleCard.classList.add('ring-2', 'ring-purple-200');
+                document.getElementById('role-hint').textContent = 'You are the JESTER! Try to get voted out to win.';
+            } else {
+                // Crew sees: Word (and topic if not hidden)
+                document.getElementById('role-icon').textContent = '✅';
+                if (info.topic) {
+                    topicContainer.classList.remove('hidden');
+                    topicLabel.textContent = 'TOPIC';
+                    document.getElementById('role-topic').textContent = info.topic;
+                } else {
+                    topicContainer.classList.add('hidden');
+                }
+                wordLabel.textContent = 'SECRET WORD';
+                roleWord.textContent = info.word;
+                roleWord.classList.add('text-gray-900');
+                document.getElementById('role-hint').textContent = 'Find the impostor! They don\'t know this word.';
+            }
+
+            document.getElementById('reveal-hidden').classList.add('hidden');
+            document.getElementById('reveal-shown').classList.remove('hidden');
+        }
+
+        function handleReadyClick() {
+            proceedFromReveal();
+
+            if (gameState.phase === GamePhase.SUBMISSION) {
+                if (isLocalMode) {
+                    showLocalStartScreen();
+                } else {
+                    showSubmissionScreen();
+                }
+            } else {
+                showRevealScreen();
+            }
+        }
+
+        // ===========================================
+        // LOCAL/PASS TO PLAY MODE
+        // ===========================================
+        function showLocalStartScreen() {
+            // Set category
+            document.getElementById('local-start-topic').textContent = gameState.currentWordData.topic;
+
+            // Set first player
+            const firstPlayerIndex = gameState.turnOrder[0];
+            const firstPlayer = gameState.players[firstPlayerIndex];
+            document.getElementById('local-start-first-avatar').textContent = firstPlayer.avatar;
+            document.getElementById('local-start-first-name').textContent = firstPlayer.name;
+
+            // Build turn order display
+            const turnOrderEl = document.getElementById('local-turn-order');
+            turnOrderEl.innerHTML = gameState.turnOrder.map((playerIndex, orderIndex) => {
+                const player = gameState.players[playerIndex];
+                const isFirst = orderIndex === 0;
+                return `
+                        <div class="flex items-center gap-1 rounded-full ${isFirst ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'} px-3 py-1">
+                            <span class="text-sm">${player.avatar}</span>
+                            <span class="text-xs font-medium">${player.name}</span>
+                        </div>
+                    `;
+            }).join('<span class="text-gray-300">→</span>');
+
+            showScreen('screen-local-start');
+        }
+
+        function showLocalResult() {
+            // Skip directly to results for local mode
+            proceedToResults();
+            showResultsScreen();
+        }
+
+        // ===========================================
+        // ONLINE SUBMISSION PHASE
+        // ===========================================
+        function showOnlineSubmissionScreen(currentTurnIndex) {
+            // Only show topic to impostor, hide from crew
+            const topicLine = document.getElementById('submission-topic-line');
+            if (gameState.isImpostor) {
+                topicLine.classList.remove('hidden');
+                document.getElementById('submission-topic').textContent = gameState.myTopic;
+            } else {
+                topicLine.classList.add('hidden');
+            }
+
+            const isMyTurn = currentTurnIndex === gameState.myIndex;
+            const currentPlayer = gameState.players[currentTurnIndex];
+
+            document.getElementById('current-turn-avatar').textContent = currentPlayer.avatar;
+            document.getElementById('current-turn-name').textContent = currentPlayer.name;
+
+            const input = document.getElementById('word-input');
+            const submitBtn = document.querySelector('#screen-submission button[type="submit"]');
+            const turnStatus = document.getElementById('turn-status');
+
+            if (isMyTurn) {
+                input.disabled = false;
+                input.placeholder = 'Your turn! Enter your word...';
+                input.focus();
+                submitBtn.disabled = false;
+                turnStatus.textContent = "It's your turn!";
+                turnStatus.classList.add('text-red-500', 'font-semibold');
+                turnStatus.classList.remove('text-gray-500');
+            } else {
+                input.disabled = true;
+                input.placeholder = `Waiting for ${currentPlayer.name}...`;
+                submitBtn.disabled = true;
+                turnStatus.textContent = `Waiting for ${currentPlayer.name} to submit...`;
+                turnStatus.classList.remove('text-red-500', 'font-semibold');
+                turnStatus.classList.add('text-gray-500');
+            }
+
+            updateSubmittedWordsList();
+            showScreen('screen-submission');
+        }
+
+        function updateOnlineSubmissionUI(currentTurnIndex) {
+            showOnlineSubmissionScreen(currentTurnIndex);
+        }
+
+        // Override handleWordSubmit for online mode
+        const originalHandleWordSubmit = typeof handleWordSubmit === 'function' ? handleWordSubmit : null;
+
+        function handleWordSubmit(auto = false) {
+            if (isLocalMode && originalHandleWordSubmit) {
+                return originalHandleWordSubmit(auto);
+            }
+
+            // Online mode
+            const input = document.getElementById('word-input');
+            let word = input.value.trim();
+
+            if (!word && auto) {
+                word = '(skipped)';
+            }
+
+            if (!word) return;
+
+            input.value = '';
+            socketSubmitWord(word);
+        }
+
+        window.showOnlineSubmissionScreen = showOnlineSubmissionScreen;
+        window.updateOnlineSubmissionUI = updateOnlineSubmissionUI;
+
+        // ===========================================
+        // ONLINE VOTING PHASE
+        // ===========================================
+        function showOnlineVotingScreen() {
+            const myPlayer = gameState.players[gameState.myIndex];
+            document.getElementById('voting-player-name').textContent = 'Cast Your Vote';
+            selectedVote = -1;
+            document.getElementById('confirm-vote-btn').disabled = true;
+
+            const options = document.getElementById('voting-options');
+            options.innerHTML = gameState.players.map((player, index) => {
+                if (index === gameState.myIndex) return ''; // Can't vote for yourself
+                return `
+                    <button onclick="selectOnlineVote(${index})" id="vote-option-${index}"
+                        class="vote-option w-full flex items-center gap-3 rounded-xl border-2 border-gray-100 bg-white p-4 text-left transition hover:border-gray-200">
+                        <span class="text-2xl">${player.avatar}</span>
+                        <span class="font-medium text-gray-900">${player.name}</span>
+                        <span class="iconify ml-auto text-gray-300" data-icon="lucide:circle" data-width="20"></span>
+                    </button>
+                `;
+            }).join('') + `
+                    <button onclick="selectOnlineVote(-1)" id="vote-option-skip"
+                        class="vote-option w-full flex items-center gap-3 rounded-xl border-2 border-gray-100 bg-white p-4 text-left transition hover:border-gray-200">
+                        <span class="text-2xl">⏭️</span>
+                        <span class="font-medium text-gray-600">Skip Vote</span>
+                        <span class="iconify ml-auto text-gray-300" data-icon="lucide:circle" data-width="20"></span>
+                    </button>
+                `;
+
+            // Update confirm button for online
+            const confirmBtn = document.getElementById('confirm-vote-btn');
+            confirmBtn.onclick = handleOnlineConfirmVote;
+
+            showScreen('screen-voting');
+        }
+
+        function selectOnlineVote(playerIndex) {
+            selectedVote = playerIndex;
+            selectVote(playerIndex);
+        }
+
+        function handleOnlineConfirmVote() {
+            if (selectedVote < 0) return;
+            socketCastVote(selectedVote);
+
+            // Disable voting UI
+            document.getElementById('confirm-vote-btn').disabled = true;
+            document.getElementById('confirm-vote-btn').textContent = 'Vote submitted...';
+        }
+
+        function updateVoteProgress(received, total) {
+            document.getElementById('confirm-vote-btn').textContent = `Waiting for votes (${received}/${total})...`;
+        }
+
+        window.showOnlineVotingScreen = showOnlineVotingScreen;
+        window.updateVoteProgress = updateVoteProgress;
+
+        // ===========================================
+        // ONLINE RESULTS
+        // ===========================================
+        function showOnlineResultsScreen(results) {
+            const header = document.getElementById('result-header');
+            const tallyContainer = document.getElementById('vote-tally').parentElement;
+
+            tallyContainer.classList.remove('hidden');
+
+            if (results.imposterCaught) {
+                header.innerHTML = `
+                    <div class="text-6xl mb-4 animate-bounce-slow">🎉</div>
+                    <h2 class="text-3xl font-bold text-green-600 font-quicksand">Crew Wins!</h2>
+                    <p class="mt-2 text-gray-500">The imposter has been caught!</p>
+                `;
+            } else if (results.tie) {
+                header.innerHTML = `
+                    <div class="text-6xl mb-4">😅</div>
+                    <h2 class="text-3xl font-bold text-yellow-600 font-quicksand">It's a Tie!</h2>
+                    <p class="mt-2 text-gray-500">No one was voted out.</p>
+                `;
+            } else {
+                header.innerHTML = `
+                    <div class="text-6xl mb-4 animate-bounce-slow">🕵️</div>
+                    <h2 class="text-3xl font-bold text-red-600 font-quicksand">Imposter Wins!</h2>
+                    <p class="mt-2 text-gray-500">The imposter escaped detection!</p>
+                `;
+            }
+
+            document.getElementById('result-imposter-name').textContent = results.imposterName;
+            document.getElementById('result-secret-word').textContent = results.secretWord;
+            document.getElementById('result-topic').textContent = `Topic: ${results.topic}`;
+
+            // Show vote tally
+            const tally = document.getElementById('vote-tally');
+            tally.innerHTML = gameState.players.map((player, index) => {
+                const votes = results.votesTally[index] || 0;
+                const isImposter = index === results.imposterIndex;
+                const wasVotedOut = index === results.votedOutIndex;
+
+                return `
+                    <div class="flex items-center gap-3 rounded-lg ${wasVotedOut ? 'bg-red-50' : 'bg-gray-100'} p-2">
+                        <span class="text-xl">${player.avatar}</span>
+                        <span class="font-medium ${isImposter ? 'text-red-600' : 'text-gray-700'}">${player.name}</span>
+                        ${isImposter ? '<span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Imposter</span>' : ''}
+                        <span class="ml-auto text-sm font-semibold text-gray-500">${votes} vote${votes !== 1 ? 's' : ''}</span>
+                    </div>
+                `;
+            }).join('');
+
+            showScreen('screen-results');
+        }
+
+        window.showOnlineResultsScreen = showOnlineResultsScreen;
+
+        // ===========================================
+        // SUBMISSION PHASE (Local mode only now)
+        // ===========================================
+        function showSubmissionScreen() {
+            // In local mode, show topic only if current player is impostor
+            const turn = getCurrentTurnPlayer();
+            const topicLine = document.getElementById('submission-topic-line');
+            if (turn && turn.index === gameState.impostorIndex) {
+                topicLine.classList.remove('hidden');
+                document.getElementById('submission-topic').textContent = gameState.currentWordData.topic;
+            } else {
+                topicLine.classList.add('hidden');
+            }
+            updateSubmissionUI();
+            showScreen('screen-submission');
+            startSubmissionTimer();
+        }
+
+
+        function updateSubmissionUI() {
+            const turn = getCurrentTurnPlayer();
+            if (!turn) return;
+
+            // In local mode, show topic only if current player is impostor
+            if (isLocalMode) {
+                const topicLine = document.getElementById('submission-topic-line');
+                if (turn.index === gameState.impostorIndex) {
+                    topicLine.classList.remove('hidden');
+                    document.getElementById('submission-topic').textContent = gameState.currentWordData.topic;
+                } else {
+                    topicLine.classList.add('hidden');
+                }
+            }
+
+            document.getElementById('current-turn-avatar').textContent = turn.player.avatar;
+            document.getElementById('current-turn-name').textContent = turn.player.name;
+            document.getElementById('word-input').value = '';
+            document.getElementById('word-input').focus();
+
+            updateSubmittedWordsList();
+        }
+
+        function updateSubmittedWordsList() {
+            const list = document.getElementById('submitted-words-list');
+
+            if (gameState.submittedWords.length === 0) {
+                list.innerHTML = '<p class="text-center text-sm text-gray-400 py-4">Waiting for submissions...</p>';
+            } else {
+                list.innerHTML = gameState.submittedWords.map((item, index) => `
+                    <div class="word-item flex items-center gap-3 rounded-lg bg-gray-50 p-3 stagger-${index + 1}">
+                        <span class="text-xl">${gameState.players[item.playerIndex].avatar}</span>
+                        <span class="font-medium text-gray-700">${item.playerName}</span>
+                        <span class="ml-auto font-semibold text-gray-900">"${item.word}"</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function startSubmissionTimer() {
+            startTimer(15, (time) => {
+                const timerEl = document.getElementById('submission-timer');
+                timerEl.textContent = time;
+                if (time <= 5) {
+                    timerEl.classList.add('timer-critical');
+                } else {
+                    timerEl.classList.remove('timer-critical');
+                }
+            }, () => {
+                // Auto-submit empty or move to next
+                if (gameState.phase === GamePhase.SUBMISSION) {
+                    handleWordSubmit(true);
+                }
+            });
+        }
+
+        // Local mode submission (only used in Pass to Play mode)
+        function handleLocalWordSubmit(auto = false) {
+            const input = document.getElementById('word-input');
+            let word = input.value.trim();
+
+            if (!word && auto) {
+                word = '(skipped)';
+            }
+
+            if (!word) return;
+
+            stopTimer();
+            submitWord(word);
+
+            if (gameState.phase === GamePhase.DISCUSSION) {
+                showDiscussionScreen();
+            } else {
+                updateSubmissionUI();
+                startSubmissionTimer();
+            }
+        }
+
+        // ===========================================
+        // DISCUSSION PHASE
+        // ===========================================
+        function showDiscussionScreen() {
+            const list = document.getElementById('discussion-words-list');
+            list.innerHTML = gameState.submittedWords.map((item, index) => `
+                <div class="rounded-lg bg-gray-50 p-3 text-left animate-fade-in stagger-${index + 1}">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span>${gameState.players[item.playerIndex].avatar}</span>
+                        <span class="text-xs font-medium text-gray-500">${item.playerName}</span>
+                    </div>
+                    <p class="font-semibold text-gray-900">"${item.word}"</p>
+                </div>
+            `).join('');
+
+            showScreen('screen-discussion');
+
+            if (isLocalMode) {
+                startDiscussionTimer();
+            } else {
+                // Online mode - show vote button for host, waiting message for others
+                const timerEl = document.getElementById('discussion-timer');
+                if (gameState.isHost) {
+                    timerEl.textContent = '⏳';
+                    // Add click handler to discussion proceed button if it exists
+                    const proceedBtn = document.getElementById('proceed-to-vote-btn');
+                    if (proceedBtn) {
+                        proceedBtn.classList.remove('hidden');
+                        proceedBtn.textContent = 'Start Voting';
+                    }
+                } else {
+                    timerEl.textContent = '💬';
+                    // Hide proceed button for non-hosts
+                    const proceedBtn = document.getElementById('proceed-to-vote-btn');
+                    if (proceedBtn) {
+                        proceedBtn.textContent = 'Waiting for host...';
+                        proceedBtn.disabled = true;
+                    }
+                }
+            }
+        }
+
+        function startDiscussionTimer() {
+            startTimer(30, (time) => {
+                const timerEl = document.getElementById('discussion-timer');
+                timerEl.textContent = time;
+                if (time <= 10) {
+                    timerEl.classList.add('timer-critical');
+                } else {
+                    timerEl.classList.remove('timer-critical');
+                }
+            }, () => {
+                // Auto proceed to voting
+                handleProceedToVote();
+            });
+        }
+
+        function handleProceedToVote() {
+            stopTimer();
+
+            if (isLocalMode) {
+                // Local mode - use existing logic
+                proceedToVoting();
+                currentVoterIndex = 0;
+                showVotingScreen();
+            } else {
+                // Online mode - host tells server to proceed
+                if (gameState.isHost) {
+                    socketProceedToVoting();
+                }
+                // Server will emit 'phase-change' to voting which triggers showOnlineVotingScreen
+            }
+        }
+
+        // ===========================================
+        // VOTING PHASE
+        // ===========================================
+        function showVotingScreen() {
+            if (currentVoterIndex >= gameState.players.length) {
+                proceedToResults();
+                showResultsScreen();
+                return;
+            }
+
+            const voter = gameState.players[currentVoterIndex];
+            document.getElementById('voting-player-name').textContent = `${voter.name}'s Vote`;
+            selectedVote = -1;
+            document.getElementById('confirm-vote-btn').disabled = true;
+
+            const options = document.getElementById('voting-options');
+            options.innerHTML = gameState.players.map((player, index) => {
+                if (index === currentVoterIndex) return ''; // Can't vote for yourself
+                return `
+                    <button onclick="selectVote(${index})" id="vote-option-${index}"
+                        class="vote-option w-full flex items-center gap-3 rounded-xl border-2 border-gray-100 bg-white p-4 text-left transition hover:border-gray-200">
+                        <span class="text-2xl">${player.avatar}</span>
+                        <span class="font-medium text-gray-900">${player.name}</span>
+                        <span class="iconify ml-auto text-gray-300" data-icon="lucide:circle" data-width="20"></span>
+                    </button>
+                `;
+            }).join('') + `
+                    <button onclick="selectVote(-1)" id="vote-option-skip"
+                        class="vote-option w-full flex items-center gap-3 rounded-xl border-2 border-gray-100 bg-white p-4 text-left transition hover:border-gray-200">
+                        <span class="text-2xl">⏭️</span>
+                        <span class="font-medium text-gray-600">Skip Vote</span>
+                        <span class="iconify ml-auto text-gray-300" data-icon="lucide:circle" data-width="20"></span>
+                    </button>
+                `;
+
+            showScreen('screen-voting');
+        }
+
+        function selectVote(playerIndex) {
+            selectedVote = playerIndex;
+
+            document.querySelectorAll('.vote-option').forEach(btn => {
+                btn.classList.remove('selected', 'border-red-500');
+                btn.querySelector('.iconify').setAttribute('data-icon', 'lucide:circle');
+            });
+
+            const elementId = playerIndex === -1 ? 'vote-option-skip' : `vote-option-${playerIndex}`;
+            const selected = document.getElementById(elementId);
+            if (selected) {
+                selected.classList.add('selected', 'border-red-500');
+                selected.querySelector('.iconify').setAttribute('data-icon', 'lucide:check-circle-2');
+            }
+
+            document.getElementById('confirm-vote-btn').disabled = false;
+        }
+
+        function handleConfirmVote() {
+            if (selectedVote < 0) return;
+
+            castVote(currentVoterIndex, selectedVote);
+            currentVoterIndex++;
+            showVotingScreen();
+        }
+
+        // ===========================================
+        // RESULTS PHASE
+        // ===========================================
+        function showResultsScreen() {
+            const results = getGameResults();
+
+            const header = document.getElementById('result-header');
+            // Use parentElement to control visibility of the whole tally section
+            const tallyContainer = document.getElementById('vote-tally').parentElement;
+            const jesterSection = document.getElementById('result-jester-section');
+
+            if (isLocalMode) {
+                // Simple reveal for local mode
+                if (results.jesterEnabled) {
+                    header.innerHTML = `
+                            <div class="text-6xl mb-4 animate-bounce-slow">🎭</div>
+                            <h2 class="text-3xl font-bold text-gray-900 font-quicksand">The Roles Were...</h2>
+                        `;
+                    jesterSection.classList.remove('hidden');
+                    document.getElementById('result-jester-name').textContent = results.jesterName;
+                } else {
+                    header.innerHTML = `
+                            <div class="text-6xl mb-4 animate-bounce-slow">🕵️</div>
+                            <h2 class="text-3xl font-bold text-gray-900 font-quicksand">The Impostor Was...</h2>
+                        `;
+                    jesterSection.classList.add('hidden');
+                }
+                // Hide vote tally for local mode
+                tallyContainer.classList.add('hidden');
+            } else {
+                jesterSection.classList.add('hidden');
+                // Full logic for online voting mode
+                tallyContainer.classList.remove('hidden');
+
+                if (results.impostorCaught) {
+                    header.innerHTML = `
+                        <div class="text-6xl mb-4 animate-bounce-slow">🎉</div>
+                        <h2 class="text-3xl font-bold text-green-600 font-quicksand">Crew Wins!</h2>
+                        <p class="mt-2 text-gray-500">The impostor has been caught!</p>
+                    `;
+                } else if (results.tie) {
+                    header.innerHTML = `
+                        <div class="text-6xl mb-4">😅</div>
+                        <h2 class="text-3xl font-bold text-yellow-600 font-quicksand">It's a Tie!</h2>
+                        <p class="mt-2 text-gray-500">No one was voted out.</p>
+                    `;
+                } else {
+                    header.innerHTML = `
+                        <div class="text-6xl mb-4 animate-bounce-slow">🕵️</div>
+                        <h2 class="text-3xl font-bold text-red-600 font-quicksand">Impostor Wins!</h2>
+                        <p class="mt-2 text-gray-500">The impostor escaped detection!</p>
+                    `;
+                }
+            }
+
+            document.getElementById('result-impostor-name').textContent = results.impostorName;
+            document.getElementById('result-secret-word').textContent = results.secretWord;
+            document.getElementById('result-topic').textContent = `Topic: ${results.topic}`;
+
+            // Show vote tally (if not local)
+            if (!isLocalMode) {
+                const tally = document.getElementById('vote-tally');
+                tally.innerHTML = gameState.players.map((player, index) => {
+                    const votes = results.votesTally[index] || 0;
+                    const isImpostor = index === results.impostorIndex;
+                    const wasVotedOut = index === results.votedOutIndex;
+
+                    return `
+                        <div class="flex items-center gap-3 rounded-lg ${wasVotedOut ? 'bg-red-50' : 'bg-gray-100'} p-2">
+                            <span class="text-xl">${player.avatar}</span>
+                            <span class="font-medium ${isImpostor ? 'text-red-600' : 'text-gray-700'}">${player.name}</span>
+                            ${isImpostor ? '<span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Impostor</span>' : ''}
+                            <span class="ml-auto text-sm font-semibold text-gray-500">${votes} vote${votes !== 1 ? 's' : ''}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Show/hide game twist options for local mode
+            const twistsSection = document.getElementById('results-twists-section');
+            const jesterToggle = document.getElementById('results-jester-toggle');
+            const jesterCheckbox = document.getElementById('jester-next-round');
+            const noTopicCheckbox = document.getElementById('no-topic-reveal-next-round');
+            const impostorHintCheckbox = document.getElementById('impostor-hint-next-round');
+
+            if (isLocalMode) {
+                twistsSection.classList.remove('hidden');
+                // Only show jester option if 4+ players
+                if (gameState.players.length >= 4) {
+                    jesterToggle.classList.remove('hidden');
+                    jesterCheckbox.checked = gameState.jesterEnabled;
+                } else {
+                    jesterToggle.classList.add('hidden');
+                }
+                // Initialize other twist checkboxes with current game state
+                noTopicCheckbox.checked = gameState.noTopicReveal;
+                impostorHintCheckbox.checked = gameState.impostorHint;
+            } else {
+                twistsSection.classList.add('hidden');
+            }
+
+            showScreen('screen-results');
+        }
+
+        function handlePlayAgain() {
+            if (isLocalMode) {
+                // Local mode - start new round with same players, new word
+                // Read game twist options from results screen checkboxes
+                const jesterCheckbox = document.getElementById('jester-next-round');
+                const noTopicCheckbox = document.getElementById('no-topic-reveal-next-round');
+                const impostorHintCheckbox = document.getElementById('impostor-hint-next-round');
+
+                const jesterEnabled = jesterCheckbox ? jesterCheckbox.checked : false;
+                const noTopicReveal = noTopicCheckbox ? noTopicCheckbox.checked : false;
+                const impostorHint = impostorHintCheckbox ? impostorHintCheckbox.checked : true;
+
+                const result = startGame({
+                    jesterEnabled: jesterEnabled,
+                    noTopicReveal: noTopicReveal,
+                    impostorHint: impostorHint
+                });
+                if (result.success) {
+                    showRevealScreen();
+                } else {
+                    alert(result.error);
+                }
+            } else {
+                // Online mode - tell server to reset and go back to waiting room
+                // Options will be re-selected by host before starting
+                socketPlayAgain();
+                showWaitingRoom();
+            }
+        }
+
+        function handleNewGame() {
+            // Go back to lobby with fresh state
+            if (typeof stopTimer === 'function') {
+                stopTimer();
+            }
+
+            if (!isLocalMode && typeof socketLeaveRoom === 'function') {
+                socketLeaveRoom();
+            }
+
+            initGame();
+            isLocalMode = false;
+            localPlayerCount = 3;
+            showScreen('screen-lobby');
+        }
+
+
+        // ===========================================
+        // RULES MODAL
+        // ===========================================
+        function showRules() {
+            document.getElementById('rules-modal').classList.remove('hidden');
+        }
+
+        function closeRules() {
+            document.getElementById('rules-modal').classList.add('hidden');
+        }
+
+        // ===========================================
+        // INITIALIZATION
+        // ===========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            initGame();
+            showScreen('screen-lobby');
+        });
+
+        // Handle Enter key for adding players
+        document.getElementById('add-player-name')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleAddPlayer();
+            }
+        });
+    </script>
+</body>
+
+</html>

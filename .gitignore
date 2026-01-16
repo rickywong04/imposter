@@ -1,0 +1,17 @@
+# Environment variables
+.env
+.env.local
+
+# Local images (not for public repo)
+*.png
+!favicon.png
+
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
