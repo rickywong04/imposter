@@ -128,7 +128,7 @@
                         </div>
 
                         <!-- Player Name Inputs -->
-                        <div id="local-player-inputs" class="mb-6 space-y-3">
+                        <div id="local-player-inputs" class="mb-6 space-y-4">
                             <div
                                 class="group flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-red-100 hover:bg-white hover:shadow-sm">
                                 <div class="flex items-center gap-3 flex-1">
@@ -139,7 +139,7 @@
                                     <input type="text" placeholder="Player 1 name" maxlength="12" data-player-index="0"
                                         class="local-player-input flex-1 bg-transparent text-sm font-semibold text-gray-700 placeholder-gray-400 focus:outline-none">
                                 </div>
-                                <button type="button" onclick="removePlayerInput(this)"
+                                <button type="button" tabindex="-1" onclick="removePlayerInput(this)"
                                     class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-500">
                                     <span class="iconify" data-icon="lucide:trash-2" data-width="18"></span>
                                 </button>
@@ -154,7 +154,7 @@
                                     <input type="text" placeholder="Player 2 name" maxlength="12" data-player-index="1"
                                         class="local-player-input flex-1 bg-transparent text-sm font-semibold text-gray-700 placeholder-gray-400 focus:outline-none">
                                 </div>
-                                <button type="button" onclick="removePlayerInput(this)"
+                                <button type="button" tabindex="-1" onclick="removePlayerInput(this)"
                                     class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-500">
                                     <span class="iconify" data-icon="lucide:trash-2" data-width="18"></span>
                                 </button>
@@ -169,7 +169,7 @@
                                     <input type="text" placeholder="Player 3 name" maxlength="12" data-player-index="2"
                                         class="local-player-input flex-1 bg-transparent text-sm font-semibold text-gray-700 placeholder-gray-400 focus:outline-none">
                                 </div>
-                                <button type="button" onclick="removePlayerInput(this)"
+                                <button type="button" tabindex="-1" onclick="removePlayerInput(this)"
                                     class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-500">
                                     <span class="iconify" data-icon="lucide:trash-2" data-width="18"></span>
                                 </button>
@@ -177,19 +177,14 @@
                         </div>
 
                         <!-- Add Player Input -->
-                        <form class="relative group mb-6" onsubmit="event.preventDefault(); addPlayerFromInput();">
-                            <div
-                                class="absolute left-4 top-1/2 flex -translate-y-1/2 text-gray-400 group-focus-within:text-red-500 transition-colors">
-                                <span class="iconify" data-icon="lucide:user-plus" data-width="20"></span>
-                            </div>
-                            <input type="text" id="add-player-input" placeholder="Add player name..." maxlength="12"
-                                class="w-full rounded-2xl border border-gray-200 bg-white py-4 pl-12 pr-14 text-sm font-semibold text-gray-800 placeholder-gray-400 shadow-sm transition focus:border-red-500 focus:outline-none focus:ring-4 focus:ring-red-500/10">
-                            <button type="submit" id="add-player-btn"
-                                class="absolute right-2 top-2 bottom-2 aspect-square rounded-xl bg-gray-50 text-gray-400 transition hover:bg-red-50 hover:text-red-600">
-                                <span class="iconify relative top-0.5" data-icon="lucide:plus-circle"
-                                    data-width="24"></span>
+                        <div class="mb-4 flex items-center justify-between text-xs text-gray-400">
+                            <span>Empty slots are ignored</span>
+                            <button type="button" onclick="addLocalPlayerInput()"
+                                class="flex items-center gap-1 font-semibold text-red-500 hover:text-red-600">
+                                <span class="iconify" data-icon="lucide:plus-circle" data-width="16"></span>
+                                Add Manual
                             </button>
-                        </form>
+                        </div>
 
                     </div>
 
@@ -912,8 +907,7 @@
          ========================================== -->
     <div id="custom-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
         <div class="absolute inset-0 bg-black/50" onclick="closeCustomModal()"></div>
-        <div
-            class="relative max-w-sm w-full rounded-2xl bg-white p-6 shadow-2xl animate-fade-in-up">
+        <div class="relative max-w-sm w-full rounded-2xl bg-white p-6 shadow-2xl animate-fade-in-up">
             <div class="flex flex-col items-center text-center">
                 <!-- Icon -->
                 <div id="modal-icon" class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
@@ -1078,52 +1072,123 @@
             input.focus();
         }
 
-        function addLocalPlayerInput(name = '') {
+
+        function getPlayerColor(index) {
+            return playerColors[index % playerColors.length];
+        }
+
+        function updateRowStyle(row, index) {
+            const input = row.querySelector('input');
+            const badge = row.querySelector('.player-badge');
+            const badgeText = badge.querySelector('span');
+            const btn = row.querySelector('button');
+            const btnIcon = btn.querySelector('.iconify') || btn.querySelector('svg');
+
+            const color = getPlayerColor(index);
+            const isActive = input.value.trim() !== '';
+
+            // Update badge number
+            badgeText.textContent = index + 1;
+
+            // Update badge colors and row styles
+            if (isActive) {
+                // Active: Standard size and styling
+                badge.className = `player-badge flex h-8 w-8 items-center justify-center rounded-full ${color.bg} ${color.text} transition-all duration-300`;
+                badgeText.className = 'font-quicksand text-xs font-bold';
+
+                row.className = 'group flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition-all hover:border-red-100 hover:bg-white hover:shadow-sm animate-fade-in';
+
+                btn.className = 'flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-500';
+                if (btnIcon) btnIcon.setAttribute('data-width', '18');
+
+                input.className = 'local-player-input flex-1 bg-transparent text-sm font-semibold text-gray-700 placeholder-gray-400 focus:outline-none';
+            } else {
+                // Inactive: Compact size and styling
+                badge.className = `player-badge flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-300 transition-all duration-300`;
+                badgeText.className = 'font-quicksand text-[10px] font-bold';
+
+                row.className = 'group flex items-center justify-between rounded-xl border border-dashed border-gray-200 bg-white/50 px-4 py-1.5 transition-all hover:border-gray-300 hover:bg-white animate-fade-in opacity-60 hover:opacity-100';
+
+                btn.className = 'flex h-6 w-6 items-center justify-center rounded-lg text-gray-300 transition hover:bg-gray-50 hover:text-red-500';
+                if (btnIcon) btnIcon.setAttribute('data-width', '14');
+
+                input.className = 'local-player-input flex-1 bg-transparent text-sm font-medium text-gray-500 placeholder-gray-400 focus:outline-none';
+            }
+
+            // Update input placeholder and data attribute
+            input.setAttribute('data-player-index', index);
+            input.placeholder = isActive ? `Player ${index + 1} name` : `Add Player ${index + 1}...`;
+        }
+
+        function addLocalPlayerInput(name = '', shouldFocus = true) {
             if (localPlayerCount >= 8) {
                 return;
             }
             localPlayerCount++;
-            const colorIndex = (localPlayerCount - 1) % playerColors.length;
-            const color = playerColors[colorIndex];
 
             const container = document.getElementById('local-player-inputs');
             const newInput = document.createElement('div');
             newInput.className = 'group flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-red-100 hover:bg-white hover:shadow-sm animate-fade-in';
+
+            // Initial render - will be updated by updateRowStyle immediately
             newInput.innerHTML = `
                 <div class="flex items-center gap-3 flex-1">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-full ${color.bg} ${color.text}">
+                    <div class="player-badge flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-300">
                         <span class="font-quicksand text-xs font-bold">${localPlayerCount}</span>
                     </div>
-                    <input type="text" placeholder="Player ${localPlayerCount} name" maxlength="12" data-player-index="${localPlayerCount - 1}" value="${name}"
+                    <input type="text" maxlength="12" value="${name}"
                         class="local-player-input flex-1 bg-transparent text-sm font-semibold text-gray-700 placeholder-gray-400 focus:outline-none">
                 </div>
-                <button type="button" onclick="removePlayerInput(this)" class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-500">
+                <button type="button" tabindex="-1" onclick="removePlayerInput(this)" class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-500">
                     <span class="iconify" data-icon="lucide:trash-2" data-width="18"></span>
                 </button>
             `;
+
             container.appendChild(newInput);
 
-            // Focus the new input if no name was provided
-            if (!name) {
+            // Apply correct styling based on content
+            updateRowStyle(newInput, localPlayerCount - 1);
+
+            // Focus the new input if no name was provided and focus is requested
+            if (!name && shouldFocus) {
                 newInput.querySelector('input').focus();
             }
         }
+
+        // Global delegation for auto-add player and style updates
+        document.addEventListener('input', (e) => {
+            if (e.target && e.target.classList.contains('local-player-input')) {
+                const row = e.target.closest('.group');
+                const container = document.getElementById('local-player-inputs');
+
+                // Update style for this row
+                if (row && container) {
+                    const rows = Array.from(container.children);
+                    const index = rows.indexOf(row);
+                    if (index !== -1) updateRowStyle(row, index);
+
+                    // Robust check: Is this the last row?
+                    if (index === rows.length - 1) {
+                        // Sync global count just in case
+                        localPlayerCount = rows.length;
+
+                        if (e.target.value.trim() !== '' && localPlayerCount < 8) {
+                            addLocalPlayerInput('', false);
+                        }
+                    }
+                }
+            }
+        });
 
         function removePlayerInput(button) {
             const row = button.closest('.group');
             row.remove();
             localPlayerCount--;
 
-            // Re-number remaining inputs and update colors
+            // Re-number remaining inputs and update styles
             const inputs = document.querySelectorAll('#local-player-inputs > div');
             inputs.forEach((div, index) => {
-                const badge = div.querySelector('.rounded-full');
-                const color = playerColors[index % playerColors.length];
-                badge.className = `flex h-8 w-8 items-center justify-center rounded-full ${color.bg} ${color.text}`;
-                badge.querySelector('span').textContent = index + 1;
-                const input = div.querySelector('input');
-                input.setAttribute('data-player-index', index);
-                input.placeholder = `Player ${index + 1} name`;
+                updateRowStyle(div, index);
             });
         }
 
@@ -1133,9 +1198,9 @@
             localPlayerCount = 0;
 
             // Add back 3 empty inputs
-            addLocalPlayerInput();
-            addLocalPlayerInput();
-            addLocalPlayerInput();
+            addLocalPlayerInput('', false);
+            addLocalPlayerInput('', false);
+            addLocalPlayerInput('', false);
         }
 
         function handleLocalStart() {
