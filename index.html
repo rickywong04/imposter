@@ -549,7 +549,7 @@
             <!-- Game Info Card -->
             <div class="rounded-2xl border border-gray-100 bg-white shadow-xl mb-6 animate-fade-in-up stagger-1">
                 <!-- Category -->
-                <div class="p-6 border-b border-gray-50">
+                <div id="local-start-topic-container" class="p-6 border-b border-gray-50">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Category</p>
                     <p id="local-start-topic" class="text-2xl font-bold text-gray-900 font-quicksand"></p>
                 </div>
@@ -1596,8 +1596,14 @@
         // LOCAL/PASS TO PLAY MODE
         // ===========================================
         function showLocalStartScreen() {
-            // Set category
-            document.getElementById('local-start-topic').textContent = gameState.currentWordData.topic;
+            // Set category (hide if noTopicReveal is enabled)
+            const topicContainer = document.getElementById('local-start-topic-container');
+            if (gameState.noTopicReveal) {
+                topicContainer.classList.add('hidden');
+            } else {
+                topicContainer.classList.remove('hidden');
+                document.getElementById('local-start-topic').textContent = gameState.currentWordData.topic;
+            }
 
             // Set first player
             const firstPlayerIndex = gameState.turnOrder[0];
