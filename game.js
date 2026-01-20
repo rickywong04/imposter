@@ -2,6 +2,37 @@
 // WORD_DATABASE is loaded from wordDatabase.js
 
 // ==========================================
+// GLOBAL METRICS (fetched from server)
+// ==========================================
+async function fetchGlobalMetrics() {
+    try {
+        const res = await fetch('/api/metrics');
+        if (res.ok) {
+            return await res.json();
+        }
+    } catch (err) {
+        console.error('Error fetching metrics:', err);
+    }
+    return { gamesPlayed: 0, friendshipsTested: 0 };
+}
+
+async function recordGameResult(playerCount) {
+    try {
+        const res = await fetch('/api/metrics/record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerCount })
+        });
+        if (res.ok) {
+            return await res.json();
+        }
+    } catch (err) {
+        console.error('Error recording game:', err);
+    }
+    return null;
+}
+
+// ==========================================
 // GAME STATE
 // ==========================================
 const GamePhase = {
@@ -397,4 +428,6 @@ window.getGameResults = getGameResults;
 window.proceedToResults = proceedToResults;
 window.playAgain = playAgain;
 window.initGame = initGame;
+window.fetchGlobalMetrics = fetchGlobalMetrics;
+window.recordGameResult = recordGameResult;
 

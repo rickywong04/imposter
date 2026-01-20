@@ -12,9 +12,36 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Impostor - Party Game</title>
-    <meta name="description" content="A multiplayer party game. Trust no one, find the impostor!">
+
+    <!-- Primary Meta Tags -->
+    <title>Impostor Hunt - Free Online Party Game | Find the Impostor</title>
+    <meta name="title" content="Impostor Hunt - Free Online Party Game | Find the Impostor">
+    <meta name="description" content="Play Impostor Hunt free online! A multiplayer party game for 3-8 players. Trust no one, find the impostor. Play locally or online with friends. Similar to Werewolf, Mafia, and Among Us.">
+    <meta name="keywords" content="impostor, imposter, impostor hunt, imposter hunt, impostor game, imposter game, party game, multiplayer game, social deduction, find the impostor, find the imposter, werewolf game, mafia game, among us, free party game, online party game, word game, guessing game, friends game, group game">
+    <meta name="author" content="Impostor Hunt">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.impostorhunt.com/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.impostorhunt.com/">
+    <meta property="og:title" content="Impostor Hunt - Free Online Party Game | Find the Impostor">
+    <meta property="og:description" content="Play Impostor Hunt free online! A multiplayer party game for 3-8 players. Trust no one, find the impostor. Play locally or online with friends.">
+    <meta property="og:image" content="https://www.impostorhunt.com/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Impostor Hunt">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.impostorhunt.com/">
+    <meta name="twitter:title" content="Impostor Hunt - Free Online Party Game | Find the Impostor">
+    <meta name="twitter:description" content="Play Impostor Hunt free online! A multiplayer party game for 3-8 players. Trust no one, find the impostor. Play locally or online with friends.">
+    <meta name="twitter:image" content="https://www.impostorhunt.com/og-image.png">
+
+    <!-- Favicon -->
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
@@ -94,6 +121,17 @@
                 </div>
                 <h1 class="font-quicksand text-4xl font-semibold tracking-tight text-gray-900">Impostor</h1>
                 <p class="mt-2 text-sm font-medium text-black">Trust no one, find the impostor</p>
+            </div>
+
+            <!-- Session Metrics -->
+            <div id="session-metrics" class="mb-6 flex justify-center gap-6 text-center animate-fade-in-up stagger-1">
+                <p class="text-sm font-medium text-gray-500">
+                    <span id="metric-games-played" class="font-quicksand font-bold text-gray-900">0</span> Games Played
+                </p>
+                <div class="h-5 w-px bg-gray-200"></div>
+                <p class="text-sm font-medium text-gray-500">
+                    <span id="metric-friendships-tested" class="font-quicksand font-bold text-red-500">0</span> Friendships Tested
+                </p>
             </div>
 
             <!-- Game Entry Card -->
@@ -1766,7 +1804,11 @@
         // ===========================================
         // ONLINE RESULTS
         // ===========================================
-        function showOnlineResultsScreen(results) {
+        async function showOnlineResultsScreen(results) {
+            // Record game metrics (track player count as "friendships tested")
+            await recordGameResult(gameState.players.length);
+            updateMetricsDisplay();
+
             const header = document.getElementById('result-header');
             const tallyContainer = document.getElementById('vote-tally').parentElement;
 
@@ -2056,8 +2098,12 @@
         // ===========================================
         // RESULTS PHASE
         // ===========================================
-        function showResultsScreen() {
+        async function showResultsScreen() {
             const results = getGameResults();
+
+            // Record game metrics (track player count as "friendships tested")
+            await recordGameResult(gameState.players.length);
+            updateMetricsDisplay();
 
             const header = document.getElementById('result-header');
             // Use parentElement to control visibility of the whole tally section
@@ -2306,10 +2352,20 @@
         }
 
         // ===========================================
+        // METRICS DISPLAY
+        // ===========================================
+        async function updateMetricsDisplay() {
+            const metrics = await fetchGlobalMetrics();
+            document.getElementById('metric-games-played').textContent = metrics.gamesPlayed;
+            document.getElementById('metric-friendships-tested').textContent = metrics.friendshipsTested;
+        }
+
+        // ===========================================
         // INITIALIZATION
         // ===========================================
         document.addEventListener('DOMContentLoaded', () => {
             initGame();
+            updateMetricsDisplay();
             showScreen('screen-lobby');
         });
 

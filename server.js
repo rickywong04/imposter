@@ -10,6 +10,53 @@ const { WORD_DATABASE } = require('./wordDatabase');
 
 const app = express();
 app.use(cors());
+app.use(express.json());
+
+// ===========================================
+// GLOBAL METRICS (persisted to JSON file)
+// ===========================================
+const METRICS_FILE = path.join(__dirname, 'metrics.json');
+
+function loadGlobalMetrics() {
+    try {
+        if (fs.existsSync(METRICS_FILE)) {
+            const data = fs.readFileSync(METRICS_FILE, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (err) {
+        console.error('Error loading metrics:', err);
+    }
+    return { gamesPlayed: 0, friendshipsTested: 0 };
+}
+
+function saveGlobalMetrics(metrics) {
+    try {
+        fs.writeFileSync(METRICS_FILE, JSON.stringify(metrics, null, 2));
+    } catch (err) {
+        console.error('Error saving metrics:', err);
+    }
+}
+
+// API: Get global metrics
+app.get('/api/metrics', (req, res) => {
+    const metrics = loadGlobalMetrics();
+    res.json(metrics);
+});
+
+// API: Record a game
+app.post('/api/metrics/record', (req, res) => {
+    const { playerCount } = req.body;
+    if (typeof playerCount !== 'number' || playerCount < 1) {
+        return res.status(400).json({ error: 'Invalid playerCount' });
+    }
+
+    const metrics = loadGlobalMetrics();
+    metrics.gamesPlayed++;
+    metrics.friendshipsTested += playerCount;
+    saveGlobalMetrics(metrics);
+
+    res.json(metrics);
+});
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
